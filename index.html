@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTF — Security Operations | GoMyCode</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&display=swap');
+
+:root {
+  --bg:#020408;
+  --panel:#080d12;
+  --card:#0c1420;
+  --border:#0f3a1f;
+  --border2:#1a4a2e;
+  --green:#00ff41;
+  --green2:#00c832;
+  --green3:#004d18;
+  --cyan:#00e5ff;
+  --yellow:#ffe600;
+  --red:#ff1744;
+  --orange:#ff6d00;
+  --purple:#d500f9;
+  --text:#c8f7c5;
+  --muted:#4a7a55;
+  --dim:#1e3a28;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+
+body{
+  font-family:'Exo 2',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* CRT scanline effect */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,65,.012) 2px,rgba(0,255,65,.012) 4px);
+  pointer-events:none;
+  z-index:9999;
+}
+
+/* Flicker animation */
+@keyframes flicker{0%,100%{opacity:1}92%{opacity:1}93%{opacity:.8}94%{opacity:1}97%{opacity:.9}98%{opacity:1}}
+@keyframes scanline{0%{transform:translateY(-100%)}100%{transform:translateY(100vh)}}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes glitch{0%,100%{clip-path:none;transform:none}20%{clip-path:polygon(0 15%,100% 15%,100% 40%,0 40%);transform:translateX(-4px)}21%{clip-path:none;transform:none}60%{clip-path:polygon(0 60%,100% 60%,100% 80%,0 80%);transform:translateX(4px)}61%{clip-path:none;transform:none}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 8px var(--green)}50%{box-shadow:0 0 24px var(--green),0 0 40px rgba(0,255,65,.3)}}
+@keyframes countup{from{opacity:0}to{opacity:1}}
+@keyframes explode{0%{transform:scale(1);opacity:1}100%{transform:scale(2.5);opacity:0}}
+
+/* ── BOOT SCREEN ── */
+#boot{
+  position:fixed;
+  inset:0;
+  background:var(--bg);
+  z-index:1000;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  font-family:'Share Tech Mono',monospace;
+}
+.boot-text{
+  color:var(--green);
+  font-size:13px;
+  line-height:2;
+  width:min(600px,90vw);
+}
+.boot-text .dim{color:var(--muted)}
+.cursor-blink{display:inline-block;width:8px;height:14px;background:var(--green);animation:blink 1s infinite;vertical-align:middle}
+
+/* ── MATRIX RAIN (canvas) ── */
+#matrix-canvas{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  opacity:.07;
+  pointer-events:none;
+}
+
+/* ── HEADER ── */
+.site-header{
+  position:sticky;top:0;z-index:200;
+  background:rgba(2,4,8,.97);
+  border-bottom:1px solid var(--border2);
+  padding:0 32px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  height:56px;
+  backdrop-filter:blur(8px);
+}
+.logo{
+  font-family:'Orbitron',monospace;
+  font-size:18px;
+  font-weight:900;
+  color:var(--green);
+  letter-spacing:3px;
+  animation:flicker 8s infinite;
+  text-shadow:0 0 12px rgba(0,255,65,.6);
+}
+.logo span{color:var(--muted);font-weight:400}
+.header-right{
+  display:flex;
+  align-items:center;
+  gap:20px;
+}
+.score-display{
+  font-family:'Share Tech Mono',monospace;
+  font-size:12px;
+  color:var(--green);
+  background:var(--card);
+  border:1px solid var(--border2);
+  border-radius:4px;
+  padding:6px 14px;
+  text-shadow:0 0 8px rgba(0,255,65,.5);
+}
+.score-display .pts{font-size:18px;font-weight:700;color:var(--green)}
+.timer-display{
+  font-family:'Share Tech Mono',monospace;
+  font-size:16px;
+  color:var(--yellow);
+  text-shadow:0 0 8px rgba(255,230,0,.5);
+}
+
+/* ── MISSION BRIEF ── */
+.mission-brief{
+  position:relative;
+  z-index:1;
+  background:linear-gradient(180deg,#020408 0%,#040810 100%);
+  border-bottom:1px solid var(--border2);
+  padding:48px 32px 40px;
+  overflow:hidden;
+}
+.mission-brief::after{
+  content:'';
+  position:absolute;
+  left:0;right:0;top:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--green),transparent);
+}
+.mission-tag{
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;
+  color:var(--green);
+  letter-spacing:4px;
+  text-transform:uppercase;
+  margin-bottom:16px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.mission-tag::before{
+  content:'▶';
+  font-size:8px;
+  color:var(--green);
+}
+.mission-h1{
+  font-family:'Orbitron',monospace;
+  font-size:clamp(28px,5vw,58px);
+  font-weight:900;
+  line-height:.95;
+  margin-bottom:16px;
+  text-shadow:0 0 30px rgba(0,255,65,.4);
+}
+.mission-h1 em{
+  color:var(--green);
+  font-style:normal;
+  animation:glitch 6s infinite;
+}
+.mission-p{
+  font-size:14px;
+  color:var(--muted);
+  max-width:760px;
+  line-height:1.7;
+  margin-bottom:28px;
+}
+.mission-stats{
+  display:flex;
+  gap:0;
+  border:1px solid var(--border2);
+  border-radius:6px;
+  overflow:hidden;
+  width:fit-content;
+}
+.mstat{
+  padding:12px 24px;
+  border-right:1px solid var(--border2);
+  text-align:center;
+}
+.mstat:last-child{border-right:none}
+.mstat-val{
+  font-family:'Orbitron',monospace;
+  font-size:22px;
+  font-weight:700;
+  color:var(--green);
+  text-shadow:0 0 10px rgba(0,255,65,.4);
+}
+.mstat-label{
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;
+  color:var(--muted);
+  letter-spacing:2px;
+  text-transform:uppercase;
+  margin-top:2px;
+}
+
+/* ── CHALLENGE MAP ── */
+.ctf-layout{
+  display:grid;
+  grid-template-columns:260px 1fr;
+  min-height:calc(100vh - 56px);
+  position:relative;
+  z-index:1;
+}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  background:var(--panel);
+  border-right:1px solid var(--border2);
+  padding:20px 0;
+  position:sticky;
+  top:56px;
+  height:calc(100vh - 56px);
+  overflow-y:auto;
+}
+.sidebar-section{
+  padding:8px 16px 4px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;
+  color:var(--muted);
+  letter-spacing:3px;
+  text-transform:uppercase;
+  margin-top:12px;
+}
+.chal-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 16px;
+  cursor:pointer;
+  border-left:3px solid transparent;
+  transition:all .15s;
+  position:relative;
+}
+.chal-item:hover{
+  background:rgba(0,255,65,.04);
+  border-left-color:var(--border2);
+}
+.chal-item.active{
+  background:rgba(0,255,65,.07);
+  border-left-color:var(--green);
+}
+.chal-item.solved{
+  border-left-color:var(--green2);
+}
+.chal-status{
+  width:10px;height:10px;
+  border-radius:50%;
+  border:1px solid var(--muted);
+  flex-shrink:0;
+  transition:all .2s;
+}
+.chal-item.solved .chal-status{
+  background:var(--green);
+  border-color:var(--green);
+  box-shadow:0 0 6px var(--green);
+}
+.chal-item.active .chal-status{
+  border-color:var(--green);
+  animation:pulse 2s infinite;
+}
+.chal-info{flex:1;min-width:0}
+.chal-name{
+  font-size:12px;
+  font-weight:600;
+  color:var(--text);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.chal-item.solved .chal-name{color:var(--green);opacity:.7}
+.chal-pts{
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;
+  flex-shrink:0;
+}
+.chal-pts.green{color:var(--green)}
+.chal-pts.yellow{color:var(--yellow)}
+.chal-pts.red{color:var(--red)}
+.chal-pts.purple{color:var(--purple)}
+
+/* Category badges */
+.cat-badge{
+  font-family:'Share Tech Mono',monospace;
+  font-size:8px;
+  padding:1px 5px;
+  border-radius:3px;
+  border:1px solid;
+  letter-spacing:1px;
+}
+.cat-forensics{color:var(--cyan);border-color:rgba(0,229,255,.3);background:rgba(0,229,255,.05)}
+.cat-ir{color:var(--green);border-color:rgba(0,255,65,.3);background:rgba(0,255,65,.05)}
+.cat-logs{color:var(--yellow);border-color:rgba(255,230,0,.3);background:rgba(255,230,0,.05)}
+.cat-crypto{color:var(--purple);border-color:rgba(213,0,249,.3);background:rgba(213,0,249,.05)}
+.cat-pcap{color:var(--orange);border-color:rgba(255,109,0,.3);background:rgba(255,109,0,.05)}
+
+/* Progress bar sidebar */
+.progress-wrap{
+  padding:16px;
+  border-top:1px solid var(--border);
+  margin-top:12px;
+}
+.progress-label{
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;
+  color:var(--muted);
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:6px;
+}
+.progress-bar-outer{
+  height:6px;
+  background:var(--card);
+  border-radius:3px;
+  overflow:hidden;
+}
+.progress-bar-inner{
+  height:100%;
+  background:linear-gradient(90deg,var(--green),var(--cyan));
+  border-radius:3px;
+  transition:width .6s ease;
+  box-shadow:0 0 8px var(--green);
+}
+
+/* ── CHALLENGE AREA ── */
+.chal-area{
+  padding:32px;
+  overflow-y:auto;
+}
+
+.chal-page{display:none;animation:fadeIn .3s ease}
+.chal-page.active{display:block}
+
+/* Challenge header */
+.ch-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:20px;
+  margin-bottom:28px;
+  padding-bottom:20px;
+  border-bottom:1px solid var(--border2);
+}
+.ch-title-wrap{}
+.ch-cat{margin-bottom:8px}
+.ch-title{
+  font-family:'Orbitron',monospace;
+  font-size:clamp(18px,2.5vw,28px);
+  font-weight:700;
+  color:var(--green);
+  text-shadow:0 0 15px rgba(0,255,65,.35);
+  margin-bottom:8px;
+}
+.ch-meta{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;
+  color:var(--muted);
+}
+.ch-pts-badge{
+  font-family:'Orbitron',monospace;
+  font-size:28px;
+  font-weight:900;
+  text-align:center;
+  text-shadow:0 0 20px currentColor;
+  flex-shrink:0;
+  line-height:1;
+}
+.pts-green{color:var(--green)}
+.pts-yellow{color:var(--yellow)}
+.pts-red{color:var(--red)}
+.pts-purple{color:var(--purple)}
+
+/* Description */
+.ch-desc{
+  background:var(--card);
+  border:1px solid var(--border2);
+  border-radius:6px;
+  padding:20px;
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.8;
+  margin-bottom:20px;
+}
+.ch-desc strong{color:var(--text)}
+.ch-desc code{
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;
+  background:rgba(0,255,65,.07);
+  border:1px solid rgba(0,255,65,.2);
+  border-radius:3px;
+  padding:1px 6px;
+  color:var(--green);
+}
+
+/* Artifact / Evidence */
+.artifact{
+  background:#020a05;
+  border:1px solid var(--border2);
+  border-radius:6px;
+  overflow:hidden;
+  margin-bottom:20px;
+}
+.artifact-header{
+  background:var(--card);
+  border-bottom:1px solid var(--border2);
+  padding:8px 16px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;
+  color:var(--muted);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.artifact-icon{color:var(--green);font-size:12px}
+.artifact-body{
+  padding:18px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;
+  color:#7ec887;
+  line-height:2;
+  overflow-x:auto;
+}
+.art-c  {color:var(--muted)}
+.art-kw {color:var(--red)}
+.art-val{color:#a5d6a7}
+.art-hl {color:var(--yellow)}
+.art-ok {color:var(--green);font-weight:700}
+.art-err{color:var(--red);font-weight:700}
+.art-ip {color:var(--cyan)}
+.art-ts {color:#80cbc4}
+
+/* Flag input */
+.flag-zone{
+  background:var(--card);
+  border:1px solid var(--border2);
+  border-radius:6px;
+  padding:20px;
+  margin-top:16px;
+}
+.flag-label{
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;
+  color:var(--muted);
+  letter-spacing:2px;
+  text-transform:uppercase;
+  margin-bottom:10px;
+}
+.flag-input-row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.flag-input{
+  flex:1;
+  background:#020a05;
+  border:1px solid var(--border2);
+  border-radius:4px;
+  padding:10px 16px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:14px;
+  color:var(--green);
+  outline:none;
+  transition:border-color .2s,box-shadow .2s;
+  text-transform:uppercase;
+  letter-spacing:2px;
+}
+.flag-input::placeholder{color:var(--muted);letter-spacing:1px;text-transform:none;font-size:11px}
+.flag-input:focus{
+  border-color:var(--green);
+  box-shadow:0 0 0 1px var(--green),inset 0 0 20px rgba(0,255,65,.05);
+}
+.flag-input.wrong{
+  border-color:var(--red);
+  box-shadow:0 0 0 1px var(--red),inset 0 0 20px rgba(255,23,68,.05);
+  animation:shake .3s ease;
+}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.flag-input.correct{
+  border-color:var(--green);
+  background:rgba(0,255,65,.05);
+}
+.submit-btn{
+  font-family:'Orbitron',monospace;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:2px;
+  padding:10px 22px;
+  background:var(--green3);
+  color:var(--green);
+  border:1px solid rgba(0,255,65,.4);
+  border-radius:4px;
+  cursor:pointer;
+  transition:all .2s;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+.submit-btn:hover{
+  background:rgba(0,255,65,.15);
+  box-shadow:0 0 16px rgba(0,255,65,.3);
+}
+.submit-btn:disabled{opacity:.4;cursor:not-allowed}
+
+.flag-feedback{
+  font-family:'Share Tech Mono',monospace;
+  font-size:12px;
+  margin-top:10px;
+  padding:8px 14px;
+  border-radius:4px;
+  display:none;
+}
+.flag-feedback.ok{
+  display:block;
+  color:var(--green);
+  background:rgba(0,255,65,.07);
+  border:1px solid rgba(0,255,65,.3);
+}
+.flag-feedback.ko{
+  display:block;
+  color:var(--red);
+  background:rgba(255,23,68,.07);
+  border:1px solid rgba(255,23,68,.3);
+}
+
+/* SOLVED overlay */
+.solved-banner{
+  background:rgba(0,255,65,.08);
+  border:1px solid rgba(0,255,65,.4);
+  border-radius:6px;
+  padding:16px 20px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin-bottom:20px;
+}
+.solved-icon{font-size:24px}
+.solved-text{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--green)}
+.solved-pts{font-family:'Orbitron',monospace;font-size:20px;font-weight:700;color:var(--green);margin-left:auto;text-shadow:0 0 10px var(--green)}
+
+/* Hint */
+.hint-btn{
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;
+  color:var(--muted);
+  background:transparent;
+  border:1px solid var(--border2);
+  border-radius:4px;
+  padding:5px 12px;
+  cursor:pointer;
+  transition:all .2s;
+  letter-spacing:1px;
+}
+.hint-btn:hover{border-color:var(--yellow);color:var(--yellow)}
+.hint-box{
+  background:rgba(255,230,0,.04);
+  border:1px solid rgba(255,230,0,.2);
+  border-radius:4px;
+  padding:12px 16px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;
+  color:var(--yellow);
+  margin-top:10px;
+  display:none;
+}
+.hint-cost{color:rgba(255,230,0,.5);font-size:10px;margin-bottom:6px}
+
+/* Interactive elements */
+.interactive-frame{
+  background:#020a05;
+  border:1px solid var(--border2);
+  border-radius:6px;
+  padding:20px;
+  margin-bottom:16px;
+}
+.int-label{
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;
+  color:var(--muted);
+  letter-spacing:2px;
+  margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.terminal-input{
+  width:100%;
+  background:transparent;
+  border:none;
+  border-bottom:1px solid var(--border2);
+  color:var(--green);
+  font-family:'Share Tech Mono',monospace;
+  font-size:13px;
+  outline:none;
+  padding:8px 0;
+  transition:border-color .2s;
+}
+.terminal-input:focus{border-bottom-color:var(--green)}
+.terminal-output{
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;
+  color:#7ec887;
+  line-height:1.9;
+  padding-top:12px;
+  min-height:40px;
+}
+
+/* Hash tool */
+.hash-tool-row{
+  display:flex;
+  gap:10px;
+  margin-bottom:10px;
+}
+.hash-ti{
+  flex:1;
+  background:#020a05;
+  border:1px solid var(--border2);
+  border-radius:4px;
+  color:var(--green);
+  font-family:'Share Tech Mono',monospace;
+  font-size:12px;
+  padding:8px 12px;
+  outline:none;
+}
+.hash-ti:focus{border-color:var(--green)}
+.hash-result-box{
+  background:var(--card);
+  border:1px solid var(--border2);
+  border-radius:4px;
+  padding:10px 14px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;
+  color:var(--cyan);
+  word-break:break-all;
+  min-height:38px;
+}
+
+/* CVSS slider */
+.cvss-rail{
+  height:8px;
+  border-radius:4px;
+  background:linear-gradient(90deg,#00ff41 0%,#ffe600 40%,#ff6d00 65%,#ff1744 100%);
+  position:relative;
+  margin:12px 0;
+}
+.cvss-needle{
+  position:absolute;
+  top:-8px;
+  transform:translateX(-50%);
+  width:3px;height:24px;
+  background:var(--text);
+  border-radius:1px;
+  transition:left .4s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 0 6px rgba(255,255,255,.5);
+}
+.cvss-needle::after{
+  content:attr(data-v);
+  position:absolute;
+  top:-18px;left:50%;
+  transform:translateX(-50%);
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;
+  color:var(--text);
+  white-space:nowrap;
+}
+
+/* Scoreboard */
+#scoreboard{
+  position:fixed;
+  inset:0;
+  z-index:500;
+  background:rgba(2,4,8,.97);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  animation:fadeIn .3s ease;
+}
+.sb-panel{
+  background:var(--panel);
+  border:1px solid var(--border2);
+  border-radius:8px;
+  width:min(600px,92vw);
+  max-height:90vh;
+  overflow-y:auto;
+  padding:32px;
+}
+.sb-title{
+  font-family:'Orbitron',monospace;
+  font-size:24px;
+  font-weight:900;
+  color:var(--green);
+  text-align:center;
+  margin-bottom:24px;
+  text-shadow:0 0 20px rgba(0,255,65,.5);
+}
+.sb-row{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  padding:12px 16px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:6px;
+  margin-bottom:8px;
+}
+.sb-rank{
+  font-family:'Orbitron',monospace;
+  font-size:18px;
+  font-weight:700;
+  width:32px;
+  text-align:center;
+}
+.sb-name{flex:1;font-weight:600;font-size:14px}
+.sb-score{
+  font-family:'Orbitron',monospace;
+  font-size:16px;
+  font-weight:700;
+  color:var(--green);
+  text-shadow:0 0 8px rgba(0,255,65,.4);
+}
+.sb-solved{
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;
+  color:var(--muted);
+}
+
+/* Flag explosion effect */
+.flag-explode{
+  position:fixed;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-family:'Orbitron',monospace;
+  font-size:40px;
+  font-weight:900;
+  color:var(--green);
+  text-shadow:0 0 40px var(--green);
+  pointer-events:none;
+  z-index:999;
+  animation:explode .8s ease forwards;
+  display:none;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+.mt{margin-top:20px}
+.mb{margin-bottom:20px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* ── AUTH SCREEN ── */
+#auth-screen{
+  position:fixed;inset:0;
+  background:rgba(2,4,8,.98);
+  z-index:3000;
+  display:flex;align-items:center;justify-content:center;
+}
+.auth-box{
+  width:min(400px,92vw);
+  border:1px solid var(--border2);
+  border-radius:8px;
+  background:var(--panel);
+  padding:32px;
+  box-shadow:0 0 50px rgba(0,255,65,.08);
+}
+.auth-logo{
+  font-family:'Orbitron',monospace;
+  font-size:18px;font-weight:900;
+  color:var(--green);text-align:center;
+  letter-spacing:3px;margin-bottom:4px;
+  text-shadow:0 0 16px rgba(0,255,65,.5);
+}
+.auth-sub{
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;color:var(--muted);
+  text-align:center;letter-spacing:3px;
+  text-transform:uppercase;margin-bottom:24px;
+}
+.auth-tabs{
+  display:flex;border:1px solid var(--border2);
+  border-radius:4px;overflow:hidden;margin-bottom:20px;
+}
+.auth-tab{
+  flex:1;padding:9px;text-align:center;
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;letter-spacing:2px;
+  cursor:pointer;color:var(--muted);
+  background:transparent;border:none;transition:all .2s;
+}
+.auth-tab.active{background:var(--green3);color:var(--green);}
+.auth-form{display:none}
+.auth-form.active{display:block}
+.auth-label{
+  display:block;font-family:'Share Tech Mono',monospace;
+  font-size:9px;color:var(--muted);
+  letter-spacing:2px;margin-bottom:4px;
+}
+.auth-input{
+  width:100%;background:var(--bg);
+  border:1px solid var(--border2);
+  color:var(--green);
+  font-family:'Share Tech Mono',monospace;
+  font-size:12px;padding:9px 12px;
+  border-radius:4px;outline:none;
+  transition:border-color .2s;margin-bottom:12px;
+}
+.auth-input:focus{border-color:var(--green)}
+.auth-btn{
+  width:100%;margin-top:8px;padding:12px;
+  background:var(--green3);
+  border:1px solid var(--green);
+  color:var(--green);
+  font-family:'Orbitron',monospace;
+  font-size:11px;font-weight:700;
+  letter-spacing:3px;border-radius:4px;
+  cursor:pointer;transition:all .2s;
+}
+.auth-btn:hover{background:var(--green);color:var(--bg)}
+.auth-err{
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;color:var(--red);
+  text-align:center;margin-top:10px;min-height:16px;
+}
+</style>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">SEC-OPS CTF</div>
+    <div class="auth-sub">GoMyCode // Operation Dark Harvest</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login',this)">CONNEXION</button>
+      <button class="auth-tab" onclick="switchTab('register',this)">S'INSCRIRE</button>
+    </div>
+    <!-- LOGIN -->
+    <div id="auth-login" class="auth-form active">
+      <label class="auth-label">EMAIL</label>
+      <input class="auth-input" id="login-email" type="email" placeholder="analyst@domain.com">
+      <label class="auth-label">MOT DE PASSE</label>
+      <input class="auth-input" id="login-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="auth-btn" onclick="doLogin()">ACCEDER AU SYSTEME</button>
+      <div class="auth-err" id="login-err"></div>
+    </div>
+    <!-- REGISTER -->
+    <div id="auth-register" class="auth-form">
+      <label class="auth-label">PSEUDO (nom d'affichage)</label>
+      <input class="auth-input" id="reg-name" type="text" placeholder="H4cker_Pr0" maxlength="20">
+      <label class="auth-label">EMAIL</label>
+      <input class="auth-input" id="reg-email" type="email" placeholder="analyst@domain.com">
+      <label class="auth-label">MOT DE PASSE (6 car. min)</label>
+      <input class="auth-input" id="reg-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()">
+      <button class="auth-btn" onclick="doRegister()">CREER UN COMPTE</button>
+      <div class="auth-err" id="reg-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MATRIX CANVAS -->
+<canvas id="matrix-canvas"></canvas>
+
+<!-- BOOT SCREEN -->
+<div id="boot">
+  <div class="boot-text" id="boot-text"></div>
+</div>
+
+<!-- FLAG EXPLOSION -->
+<div class="flag-explode" id="flag-explode">🚩 FLAG!</div>
+
+<!-- SCOREBOARD MODAL -->
+<div id="scoreboard">
+  <div class="sb-panel">
+    <div class="sb-title">// LEADERBOARD</div>
+    <div id="sb-content"></div>
+    <button onclick="closeScoreboard()" style="width:100%;margin-top:20px;font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--muted);background:transparent;border:1px solid var(--border2);border-radius:4px;padding:10px;cursor:pointer;letter-spacing:2px">[ CLOSE ]</button>
+  </div>
+</div>
+
+<!-- ── SITE HEADER ── -->
+<header class="site-header" id="main-header" style="display:none">
+  <div class="logo">GOMYCODE <span>/ SEC-OPS CTF</span></div>
+  <div class="header-right">
+    <div class="score-display">SCORE: <span class="pts" id="hdr-score">0</span> PTS</div>
+    <div class="timer-display" id="hdr-timer">00:00:00</div>
+    <span id="hdr-user" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px"></span>
+    <button onclick="openScoreboard()" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);background:transparent;border:1px solid var(--border2);border-radius:4px;padding:6px 12px;cursor:pointer;letter-spacing:1px">BOARD</button>
+    <button id="admin-btn" onclick="openAdminPanel()" style="display:none;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--purple);background:transparent;border:1px solid rgba(213,0,249,.35);border-radius:4px;padding:6px 12px;cursor:pointer;letter-spacing:1px">ADMIN</button>
+    <button onclick="doLogout()" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--red);background:transparent;border:1px solid rgba(255,23,68,.3);border-radius:4px;padding:6px 12px;cursor:pointer;letter-spacing:1px">LOGOUT</button>
+  </div>
+</header>
+
+<!-- ── MISSION BRIEF ── -->
+<div class="mission-brief" id="main-brief" style="display:none">
+  <div class="mission-tag">OPERATION : DARK HARVEST — BRIEFING</div>
+  <h1 class="mission-h1">COMPROMISSION<br>DE <em>SRV-DC01</em></h1>
+  <p class="mission-p">
+    Le contrôleur de domaine principal de <strong style="color:var(--text)">CorpTech SA</strong> a été compromis à <strong style="color:var(--green)">08h14 UTC</strong> ce matin. Les attaquants ont maintenu un accès furtif pendant 72h. Votre mission : analyser les preuves, reconstruire la timeline et identifier les techniques utilisées. Chaque challenge vous rapproche de la vérité.
+  </p>
+  <div class="mission-stats">
+    <div class="mstat"><div class="mstat-val">12</div><div class="mstat-label">Challenges</div></div>
+    <div class="mstat"><div class="mstat-val">1600</div><div class="mstat-label">Points max</div></div>
+    <div class="mstat"><div class="mstat-val">5</div><div class="mstat-label">Catégories</div></div>
+    <div class="mstat"><div class="mstat-val" id="solved-count">0</div><div class="mstat-label">Résolus</div></div>
+  </div>
+</div>
+
+<!-- ── CTF LAYOUT ── -->
+<div class="ctf-layout" id="main-layout" style="display:none">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">// INCIDENT RESPONSE</div>
+    <div class="chal-item active" id="nav-c1" onclick="showChallenge('c1')">
+      <div class="chal-status" id="st-c1"></div>
+      <div class="chal-info"><div class="chal-name">IR-01 · First Steps</div><div class="cat-badge cat-ir">IR</div></div>
+      <div class="chal-pts green">100</div>
+    </div>
+    <div class="chal-item" id="nav-c2" onclick="showChallenge('c2')">
+      <div class="chal-status" id="st-c2"></div>
+      <div class="chal-info"><div class="chal-name">IR-02 · Kill Chain</div><div class="cat-badge cat-ir">IR</div></div>
+      <div class="chal-pts green">150</div>
+    </div>
+    <div class="chal-item" id="nav-c3" onclick="showChallenge('c3')">
+      <div class="chal-status" id="st-c3"></div>
+      <div class="chal-info"><div class="chal-name">IR-03 · RPO Calcul</div><div class="cat-badge cat-ir">IR</div></div>
+      <div class="chal-pts yellow">125</div>
+    </div>
+
+    <div class="sidebar-section">// DIGITAL FORENSICS</div>
+    <div class="chal-item" id="nav-c4" onclick="showChallenge('c4')">
+      <div class="chal-status" id="st-c4"></div>
+      <div class="chal-info"><div class="chal-name">FOR-01 · Volatility</div><div class="cat-badge cat-forensics">FORENSICS</div></div>
+      <div class="chal-pts green">100</div>
+    </div>
+    <div class="chal-item" id="nav-c5" onclick="showChallenge('c5')">
+      <div class="chal-status" id="st-c5"></div>
+      <div class="chal-info"><div class="chal-name">FOR-02 · Chain of Custody</div><div class="cat-badge cat-forensics">FORENSICS</div></div>
+      <div class="chal-pts yellow">175</div>
+    </div>
+    <div class="chal-item" id="nav-c6" onclick="showChallenge('c6')">
+      <div class="chal-status" id="st-c6"></div>
+      <div class="chal-info"><div class="chal-name">FOR-03 · Hash Verify</div><div class="cat-badge cat-crypto">CRYPTO</div></div>
+      <div class="chal-pts purple">150</div>
+    </div>
+
+    <div class="sidebar-section">// LOG ANALYSIS</div>
+    <div class="chal-item" id="nav-c7" onclick="showChallenge('c7')">
+      <div class="chal-status" id="st-c7"></div>
+      <div class="chal-info"><div class="chal-name">LOG-01 · Event IDs</div><div class="cat-badge cat-logs">LOGS</div></div>
+      <div class="chal-pts yellow">125</div>
+    </div>
+    <div class="chal-item" id="nav-c8" onclick="showChallenge('c8')">
+      <div class="chal-status" id="st-c8"></div>
+      <div class="chal-info"><div class="chal-name">LOG-02 · DNS Hunt</div><div class="cat-badge cat-logs">LOGS</div></div>
+      <div class="chal-pts red">200</div>
+    </div>
+    <div class="chal-item" id="nav-c9" onclick="showChallenge('c9')">
+      <div class="chal-status" id="st-c9"></div>
+      <div class="chal-info"><div class="chal-name">LOG-03 · Firewall Rules</div><div class="cat-badge cat-logs">LOGS</div></div>
+      <div class="chal-pts yellow">125</div>
+    </div>
+
+    <div class="sidebar-section">// NETWORK</div>
+    <div class="chal-item" id="nav-c10" onclick="showChallenge('c10')">
+      <div class="chal-status" id="st-c10"></div>
+      <div class="chal-info"><div class="chal-name">NET-01 · PCAP Analysis</div><div class="cat-badge cat-pcap">PCAP</div></div>
+      <div class="chal-pts red">175</div>
+    </div>
+    <div class="chal-item" id="nav-c11" onclick="showChallenge('c11')">
+      <div class="chal-status" id="st-c11"></div>
+      <div class="chal-info"><div class="chal-name">NET-02 · CVSS Scoring</div><div class="cat-badge cat-pcap">VULN</div></div>
+      <div class="chal-pts yellow">100</div>
+    </div>
+    <div class="chal-item" id="nav-c12" onclick="showChallenge('c12')">
+      <div class="chal-status" id="st-c12"></div>
+      <div class="chal-info"><div class="chal-name">FINAL · La Timeline</div><div class="cat-badge cat-ir" style="background:rgba(255,23,68,.07);border-color:rgba(255,23,68,.3);color:var(--red)">FINAL</div></div>
+      <div class="chal-pts red">175</div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label"><span>PROGRESSION</span><span id="prog-txt">0/12</span></div>
+      <div class="progress-bar-outer">
+        <div class="progress-bar-inner" id="prog-bar" style="width:0%"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CHALLENGE AREA -->
+  <div class="chal-area">
+
+<!-- ══════════════════════════════════
+  C1 — IR-01 : FIRST STEPS
+══════════════════════════════════ -->
+<div class="chal-page active" id="c1">
+  <div class="ch-header">
+    <div class="ch-title-wrap">
+      <div class="ch-cat"><span class="cat-badge cat-ir">IR</span></div>
+      <div class="ch-title">IR-01 · First Steps</div>
+      <div class="ch-meta"><span>Difficulté : FACILE</span><span>|</span><span>Catégorie : Incident Response</span></div>
+    </div>
+    <div class="ch-pts-badge pts-green">100<div style="font-size:11px;font-family:'Share Tech Mono',monospace;font-weight:400;opacity:.7">PTS</div></div>
+  </div>
+
+  <div class="ch-desc">
+    Une alerte EDR vient de remonter sur <strong>SRV-DC01</strong> — infection malware confirmée. Votre manager vous appelle : <em>"Éteignez-le maintenant pour stopper la propagation !"</em>
+    <br><br>
+    Dans le cycle IR <strong>NIST/SANS en 7 étapes</strong>, quelle phase vient <strong>immédiatement APRÈS la Détection</strong> et que doit-on faire en <strong>PRIORITÉ ABSOLUE</strong> avant de contenir le système ?
+  </div>
+
+  <div class="artifact">
+    <div class="artifact-header"><span class="artifact-icon">📋</span> NIST/SANS IR LIFECYCLE — Référence</div>
+    <div class="artifact-body">
+<span class="art-c">Phase 01 │</span> PRÉPARATION     <span class="art-c">→ Plan IR, CSIRT, playbooks</span>
+<span class="art-c">Phase 02 │</span> <span class="art-hl">DÉTECTION ← vous êtes ici</span>
+<span class="art-c">Phase 03 │</span> <span class="art-kw">ANALYSE</span>          <span class="art-c">→ ???</span>
+<span class="art-c">Phase 04 │</span> CONFINEMENT     <span class="art-c">→ Isolation du système</span>
+<span class="art-c">Phase 05 │</span> ÉRADICATION     <span class="art-c">→ Suppression malware + patch</span>
+<span class="art-c">Phase 06 │</span> REPRISE         <span class="art-c">→ Restauration + surveillance</span>
+<span class="art-c">Phase 07 │</span> LEÇONS APPRISES <span class="art-c">→ Rapport + mise à jour playbooks</span>
+
+<span class="art-c">
+⚠ ALERTE CRITIQUE : SRV-DC01 est allumé avec un malware actif.
+  Que capturez-vous EN PRIORITÉ avant toute extinction ?</span>
+    </div>
+  </div>
+
+  <div class="flag-zone">
+    <div class="flag-label">▶ ENTREZ LE FLAG</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{M0T_CL3_M4JUSCUL3S}</span> — La phase qui suit la détection + ce que vous capturez en priorité absolue</div>
+    <div class="flag-input-row">
+      <input class="flag-input" id="flag-c1" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
+      <button class="submit-btn" onclick="submitFlag('c1','FL4G{4N4LYS3_R4M}','Correct ! La phase Analyse précède toujours le Confinement. Et capturer la RAM est la priorité absolue — elle contient les clés de déchiffrement, processus actifs et connexions réseau qui disparaissent au redémarrage.',100)">SUBMIT</button>
+    </div>
+    <div class="flag-feedback" id="fb-c1"></div>
+    <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+      <button class="hint-btn" onclick="showHint('h1')">💡 HINT (-25 pts)</button>
+      <div class="hint-box" id="h1"><div class="hint-cost">Coût : -25 points</div>Le manager a tort. On n'éteint JAMAIS avant d'avoir fait deux choses : (1) passer par la phase qui vient entre Détection et Confinement dans le cycle IR, et (2) capturer ce qui disparaît en quelques secondes au redémarrage.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+  C2 — IR-02 : KILL CHAIN
+══════════════════════════════════ -->
+<div class="chal-page" id="c2">
+  <div class="ch-header">
+    <div class="ch-title-wrap">
+      <div class="ch-cat"><span class="cat-badge cat-ir">IR</span></div>
+      <div class="ch-title">IR-02 · Kill Chain Phase</div>
+      <div class="ch-meta"><span>Difficulté : FACILE</span><span>|</span><span>Lockheed Martin Cyber Kill Chain</span></div>
+    </div>
+    <div class="ch-pts-badge pts-green">150<div style="font-size:11px;font-family:'Share Tech Mono',monospace;font-weight:400;opacity:.7">PTS</div></div>
+  </div>
+  <div class="ch-desc">
+    L'analyse des logs Sysmon révèle qu'à <strong>08h15:14</strong> un processus <code>powershell.exe</code> encodé en Base64 a été exécuté, suivi de la création d'un service Windows nommé <strong>WindowsUpdateHelper</strong> pointant vers <code>C:\tmp\svc.exe</code>.
+    <br><br>
+    Dans la <strong>Cyber Kill Chain de Lockheed Martin (7 phases)</strong>, la création de ce service Windows pour assurer la survie au redémarrage correspond à quelle phase ?
+  </div>
+  <div class="artifact">
+    <div class="artifact-header"><span class="artifact-icon">📜</span> Sysmon EventLog — SRV-DC01</div>
+    <div class="artifact-body">
+<span class="art-ts">2026-01-15T08:15:14.314Z</span> EventID=<span class="art-hl">4688</span> ProcessCreate
+  Image: <span class="art-kw">C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe</span>
+  CommandLine: powershell.exe <span class="art-kw">-enc</span> <span class="art-val">JABjAGwAaQBlAG4AdAAgAD0AIABOAGUAdwA...</span>
+  ParentImage: C:\Windows\System32\mshta.exe
+
+<span class="art-ts">2026-01-15T08:15:28.001Z</span> EventID=<span class="art-hl">7045</span> ServiceInstalled
+  ServiceName: <span class="art-kw">WindowsUpdateHelper</span>
+  ImagePath:   <span class="art-kw">C:\tmp\svc.exe</span>
+  StartType:   AUTO_START
+  <span class="art-c">→ Ce service démarre automatiquement à chaque redémarrage</span>
+
+<span class="art-c">
+Kill Chain — Phases :
+  1.Reconnaissance 2.Armement 3.Livraison
+  4.Exploitation   5.???       6.C2        7.Actions</span>
+    </div>
+  </div>
+  <div class="flag-zone">
+    <div class="flag-label">▶ ENTREZ LE FLAG</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{N0M_PH4S3}</span> — Nom de la phase Kill Chain en anglais</div>
+    <div class="flag-input-row">
+      <input class="flag-input" id="flag-c2" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
+      <button class="submit-btn" onclick="submitFlag('c2','FL4G{1NST4LL4T10N}','Phase 5 — Installation. L\'attaquant crée un mécanisme de persistance (clé registre Run, service système, tâche planifiée) pour survivre aux redémarrages. C\'est APRÈS l\'Exploitation (phase 4) et AVANT C2 (phase 6).',150)">SUBMIT</button>
+    </div>
+    <div class="flag-feedback" id="fb-c2"></div>
+    <div style="margin-top:12px;display:flex;gap:10px">
+      <button class="hint-btn" onclick="showHint('h2')">💡 HINT (-25 pts)</button>
+      <div class="hint-box" id="h2"><div class="hint-cost">Coût : -25 points</div>Un service Windows configuré en AUTO_START = survie au redémarrage. Quelle phase de la Kill Chain concerne l'établissement de la persistance sur le système compromis ? C'est la phase 5, entre Exploitation et C2.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+  C3 — IR-03 : RPO CALCUL
+══════════════════════════════════ -->
+<div class="chal-page" id="c3">
+  <div class="ch-header">
+    <div class="ch-title-wrap">
+      <div class="ch-cat"><span class="cat-badge cat-ir">IR</span></div>
+      <div class="ch-title">IR-03 · RPO Calculation</div>
+      <div class="ch-meta"><span>Difficulté : MOYEN</span><span>|</span><span>BIA Metrics</span></div>
+    </div>
+    <div class="ch-pts-badge pts-yellow">125<div style="font-size:11px;font-family:'Share Tech Mono',monospace;font-weight:400;opacity:.7">PTS</div></div>
+  </div>
+  <div class="ch-desc">
+    La Direction de CorpTech SA exige que <strong>la perte de données maximale acceptable</strong> soit de <strong>3 heures</strong>. Le dernier backup complet a eu lieu à <strong>05h00 UTC</strong>. La panne a été détectée à <strong>08h14 UTC</strong>. 
+    <br><br>
+    Calculez le <strong>nombre d'heures de données effectivement perdues</strong> et déterminez si le <strong>RPO contractuel de 3h est respecté</strong>.
+  </div>
+  <div class="artifact">
+    <div class="artifact-header"><span class="artifact-icon">📊</span> Backup System — CorpTech SA</div>
+    <div class="artifact-body">
+<span class="art-c">Politique de sauvegarde :</span>
+  RPO contractuel    : <span class="art-hl">3 heures</span>
+  Fréquence backup   : Toutes les 4 heures (00h, 04h, 08h, 12h...)
+  Dernier backup OK  : <span class="art-val">2026-01-15T05:00:00Z</span>  ← 05h00 UTC
+  Backup suivant prévu: 2026-01-15T09:00:00Z  ← 09h00 UTC
+
+<span class="art-c">Incident :</span>
+  Heure de panne     : <span class="art-kw">2026-01-15T08:14:00Z</span>  ← 08h14 UTC
+
+<span class="art-c">
+Question : Panne à 08h14, dernier backup à 05h00.
+  Combien d'heures de données sont perdues ?
+  Est-ce &lt; ou &gt; au RPO de 3h ?</span>
+    </div>
+  </div>
+  <div class="interactive-frame">
+    <div class="int-label">⚡ CALCULATEUR RPO INTERACTIF</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+      <div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:5px">Dernier backup (heures)</div>
+        <input type="number" id="rpo-backup" value="5" min="0" max="23" oninput="calcRPO()" style="width:100%;background:#020a05;border:1px solid var(--border2);color:var(--green);font-family:'Share Tech Mono',monospace;font-size:14px;padding:8px;border-radius:4px;outline:none">
+      </div>
+      <div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:5px">Heure de panne</div>
+        <input type="number" id="rpo-panne" value="8" min="0" max="23" oninput="calcRPO()" style="width:100%;background:#020a05;border:1px solid var(--border2);color:var(--green);font-family:'Share Tech Mono',monospace;font-size:14px;padding:8px;border-radius:4px;outline:none">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);margin-top:3px">min: 14</div>
+      </div>
+      <div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:5px">RPO contractuel (h)</div>
+        <input type="number" id="rpo-sla" value="3" min="1" max="24" oninput="calcRPO()" style="width:100%;background:#020a05;border:1px solid var(--border2);color:var(--green);font-family:'Share Tech Mono',monospace;font-size:14px;padding:8px;border-radius:4px;outline:none">
+      </div>
+    </div>
+    <div class="terminal-output" id="rpo-out">→ Ajustez les valeurs pour calculer...</div>
+  </div>
+  <div class="flag-zone">
+    <div class="flag-label">▶ ENTREZ LE FLAG</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{Xh14_V10L4T3D}</span> ou <span style="color:var(--green)">FL4G{Xh14_R3SP3CT3D}</span> — X = heures entières perdues</div>
+    <div class="flag-input-row">
+      <input class="flag-input" id="flag-c3" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
+      <button class="submit-btn" onclick="submitFlag('c3','FL4G{3H14_V10L4T3D}','Panne à 08h14, backup à 05h00 → 3h14 de données perdues. Le RPO de 3h est VIOLÉ de 14 minutes. Conséquence : la politique de backup doit passer à toutes les 2h ou 3h max pour respecter le SLA.',125)">SUBMIT</button>
+    </div>
+    <div class="flag-feedback" id="fb-c3"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+  C4 — FOR-01 : VOLATILITY
+══════════════════════════════════ -->
+<div class="chal-page" id="c4">
+  <div class="ch-header">
+    <div class="ch-title-wrap">
+      <div class="ch-cat"><span class="cat-badge cat-forensics">FORENSICS</span></div>
+      <div class="ch-title">FOR-01 · Volatility Analysis</div>
+      <div class="ch-meta"><span>Difficulté : MOYEN</span><span>|</span><span>Ordre de Volatilité</span></div>
+    </div>
+    <div class="ch-pts-badge pts-green">100<div style="font-size:11px;font-family:'Share Tech Mono',monospace;font-weight:400;opacity:.7">PTS</div></div>
+  </div>
+  <div class="ch-desc">
+    L'output de <code>vol -f ram.dmp windows.pslist</code> révèle un processus suspect. Identifiez son <strong>nom exact</strong> et le <strong>PID parent</strong> anormal. Un processus légitime Windows ne devrait pas avoir <code>mshta.exe</code> comme parent.
+    <br><br>Quel est le <strong>nom du processus malveillant</strong> ET son <strong>PPID</strong> ?
+  </div>
+  <div class="artifact">
+    <div class="artifact-header"><span class="artifact-icon">🔬</span> Volatility 3 — windows.pslist output (extrait)</div>
+    <div class="artifact-body">
+<span class="art-c">PID    PPID   Name                   Offset   Threads  Handles  Create Time</span>
+<span class="art-c">────── ────── ─────────────────────── ──────── ──────── ──────── ──────────────</span>
+4      0      System                 0x8a0    141      -        2026-01-15
+688    4      smss.exe               0x1f3a   3        -        2026-01-15
+772    688    csrss.exe              0x2b1c   11       403      2026-01-15
+836    820    winlogon.exe           0x3c4d   5        117      2026-01-15
+924    820    services.exe           0x4f2b   6        200      2026-01-15
+932    924    svchost.exe            0x511e   14       450      2026-01-15
+1044   924    svchost.exe            0x62a3   8        290      2026-01-15
+1304   836    lsass.exe              0x7d1f   7        900      2026-01-15
+2248   1304   <span class="art-kw">mshta.exe</span>              0x9e4b   3        80       08:13:55
+3712   <span class="art-kw">2248</span>   <span class="art-kw">powershell.exe</span>         0xae7c   4        150      08:15:14
+<span class="art-hl">4891</span>   <span class="art-kw">3712</span>   <span class="art-kw">svc.exe</span>                0xbf3a   2        44       08:15:29
+1256   924    <span class="art-val">WindowsUpdateHelper.exe</span> 0xcd1b  1        12       08:15:30
+    </div>
+  </div>
+  <div class="flag-zone">
+    <div class="flag-label">▶ ENTREZ LE FLAG</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{N0M_PP1D}</span> — nom du processus malveillant initial et son PID parent (ex: FL4G{svc.3x3_3712})</div>
+    <div class="flag-input-row">
+      <input class="flag-input" id="flag-c4" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
+      <button class="submit-btn" onclick="submitFlag('c4','FL4G{SVC.3X3_3712}','svc.exe (PID 4891) a pour parent powershell.exe (PPID 3712), lui-même enfant de mshta.exe. La chaîne lsass.exe → mshta.exe est anormale — lsass ne devrait pas lancer mshta. C\'est le vecteur d\'infection initial.',100)">SUBMIT</button>
+    </div>
+    <div class="flag-feedback" id="fb-c4"></div>
+    <div style="margin-top:12px">
+      <button class="hint-btn" onclick="showHint('h4')">💡 HINT (-25 pts)</button>
+      <div class="hint-box" id="h4"><div class="hint-cost">Coût : -25 points</div>Cherchez le processus dont le parent (PPID) est powershell.exe (PID 3712). Le malware cherche à se cacher mais Volatility révèle la chaîne parente complète.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+  C5 — FOR-02 : CHAIN OF CUSTODY
+══════════════════════════════════ -->
+<div class="chal-page" id="c5">
+  <div class="ch-header">
+    <div class="ch-title-wrap">
+      <div class="ch-cat"><span class="cat-badge cat-forensics">FORENSICS</span></div>
+      <div class="ch-title">FOR-02 · Chain of Custody Breach</div>
+      <div class="ch-meta"><span>Difficulté : MOYEN</span><span>|</span><span>Chain of Custody</span></div>
+    </div>
+    <div class="ch-pts-badge pts-yellow">175<div style="font-size:11px;font-family:'Share Tech Mono',monospace;font-weight:400;opacity:.7">PTS</div></div>
+  </div>
+  <div class="ch-desc">
+    L'avocat de la défense conteste la recevabilité des preuves collectées sur SRV-DC01. Analysez le formulaire de Chain of Custody ci-dessous et <strong>identifiez l'erreur critique</strong> qui pourrait invalider les preuves devant un tribunal.
+  </div>
+  <div class="artifact">
+    <div class="artifact-header"><span class="artifact-icon">📋</span> FORMULAIRE CHAIN OF CUSTODY — Affaire INC-2026-00142</div>
+    <div class="artifact-body">
+<span class="art-c">COLLECTE INITIALE</span>
+  Collecté par   : SAGNA Aliou B.
+  Date/Heure UTC : <span class="art-val">2026-01-15T08:14:00Z</span>
+  SHA256 disque  : <span class="art-val">e3b0c44298fc1c14...a8</span>
+  SHA256 RAM     : <span class="art-val">7f83b1657ff1fc53...3f</span>
+  Scellé signé   : ✓
+
+<span class="art-c">TRANSFERT 1 — vers Laboratoire Forensique</span>
+  De             : SAGNA Aliou B.
+  Vers           : Dr DIALLO — Labo Forensique
+  Date           : <span class="art-val">2026-01-15T10:30:00Z</span>
+  Vérification   : <span class="art-ok">SHA256 OK ✓</span>
+
+<span class="art-c">TRANSFERT 2 — vers Parquet</span>
+  De             : Dr DIALLO
+  Vers           : Tribunal de Paris
+  Date           : <span class="art-kw">NON DOCUMENTÉ</span>  <span class="art-c">← !</span>
+  Vérification   : <span class="art-kw">NON EFFECTUÉE</span>  <span class="art-c">← !</span>
+
+<span class="art-c">TRANSFERT 3 — retour depuis Tribunal</span>
+  De             : Tribunal de Paris
+  Vers           : Labo Forensique
+  Date           : <span class="art-val">2026-01-22T14:00:00Z</span>
+  SHA256 vérifié : <span class="art-kw">e3b0c44298fc1c14...b7</span>  <span class="art-c">← différent !</span>
+    </div>
+  </div>
+  <div class="flag-zone">
+    <div class="flag-label">▶ ENTREZ LE FLAG</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{3RR3UR_CR1T1QU3}</span> — Une seule erreur rend la preuve irrecevable (2 mots max)</div>
+    <div class="flag-input-row">
+      <input class="flag-input" id="flag-c5" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
+      <button class="submit-btn" onclick="submitFlag('c5','FL4G{H4SH_M0D1F13}','Le SHA256 au retour du tribunal (b7) est différent du hash original (a8). Cela prouve une altération de la preuve pendant le transfert non documenté. Double problème : transfert 2 non documenté ET hash différent au retour. La preuve est irrecevable.',175)">SUBMIT</button>
+    </div>
+    <div class="flag-feedback" id="fb-c5"></div>
+    <div style="margin-top:12px">
+      <button class="hint-btn" onclick="showHint('h5')">💡 HINT (-25 pts)</button>
+      <div class="hint-box" id="h5"><div class="hint-cost">Coût : -25 points</div>Il y a deux problèmes dans ce formulaire. L'un d'eux est définitif et prouve mathématiquement que la preuve a été altérée. Comparez le SHA256 de la collecte initiale avec le SHA256 au retour du tribunal.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+  C6 — FOR-03 : HASH VERIFY
+══════════════════════════════════ -->
+<div class="chal-page" id="c6">
+  <div class="ch-header">
+    <div class="ch-title-wrap">
+      <div class="ch-cat"><span class="cat-badge cat-crypto">CRYPTO</span></div>
+      <div class="ch-title">FOR-03 · Hash Verification</div>
+      <div class="ch-meta"><span>Difficulté : MOYEN</span><span>|</span><span>SHA-256 & Intégrité</span></div>
+    </div>
+    <div class="ch-pts-badge pts-purple">150<div style="font-size:11px;font-family:'Share Tech Mono',monospace;font-weight:400;opacity:.7">PTS</div></div>
+  </div>
+  <div class="ch-desc">
+    Le laboratoire vous fournit trois fichiers de preuves avec leurs hashes déclarés. Utilisez l'outil interactif ci-dessous pour calculer les hashes SHA-256 des contenus et <strong>identifier quel fichier a été altéré</strong> (hash déclaré ≠ hash calculé).
+    <br><br>Le flag est le <strong>nom du fichier corrompu</strong>.
+  </div>
+  <div class="artifact">
+    <div class="artifact-header"><span class="artifact-icon">🔐</span> Manifest d'intégrité — Labo Forensique</div>
+    <div class="artifact-body">
+<span class="art-c">Fichier                    │ Hash SHA-256 déclaré (à vérifier)</span>
+<span class="art-c">───────────────────────────┼────────────────────────────────────</span>
+<span class="art-val">dc01_ram.dmp</span>               │ <span class="art-val">b94d27b9934d3e08a52e52d7da7dabfac484efe04294e576c</span>
+<span class="art-val">dc01_disk.dd</span>               │ <span class="art-val">a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e</span>
+<span class="art-val">network_capture.pcap</span>       │ <span class="art-val">2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e</span>
+
+<span class="art-c">Contenu original des fichiers (simulé) :</span>
+  dc01_ram.dmp    → contenu: "forensic_ram_evidence_2026"
+  dc01_disk.dd    → contenu: "disk_image_dc01_corptech"  <span class="art-kw">← modifié !</span>
+  network_capture → contenu: "hello"
+    </div>
+  </div>
+  <div class="interactive-frame">
+    <div class="int-label">🔐 OUTIL SHA-256 — Vérifiez les hashes</div>
+    <div class="hash-tool-row">
+      <input class="hash-ti" id="h-input" placeholder="Entrez le contenu du fichier à hasher...">
+      <button onclick="hashCheck()" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--green);background:var(--green3);border:1px solid rgba(0,255,65,.3);border-radius:4px;padding:8px 16px;cursor:pointer;letter-spacing:1px">HASH</button>
+    </div>
+    <div class="hash-result-box" id="h-output">→ SHA-256 apparaîtra ici</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px">Comparez avec les hashes du manifest ci-dessus.</div>
+  </div>
+  <div class="flag-zone">
+    <div class="flag-label">▶ ENTREZ LE FLAG</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{N0M_F1CH13R}</span> — sans extension</div>
+    <div class="flag-input-row">
+      <input class="flag-input" id="flag-c6" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
+      <button class="submit-btn" onclick="submitFlag('c6','FL4G{DC01_D1SK}','dc01_disk.dd a été altéré ! Hash déclaré pour \"disk_image_dc01_corptech\" ne correspond pas au SHA-256 réel du contenu fourni. C\'est la preuve d\'une falsification post-acquisition. Cette preuve est irrecevable.',150)">SUBMIT</button>
+    </div>
+    <div class="flag-feedback" id="fb-c6"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+  C7 — LOG-01 : EVENT IDs
+══════════════════════════════════ -->
+<div class="chal-page" id="c7">
+  <div class="ch-header">
+    <div class="ch-title-wrap">
+      <div class="ch-cat"><span class="cat-badge cat-logs">LOGS</span></div>
+      <div class="ch-title">LOG-01 · Windows Event IDs</div>
+      <div class="ch-meta"><span>Difficulté : FACILE</span><span>|</span><span>Windows Security Logs</span></div>
+    </div>
+    <div class="ch-pts-badge pts-yellow">125<div style="font-size:11px;font-family:'Share Tech Mono',monospace;font-weight:400;opacity:.7">PTS</div></div>
+  </div>
+  <div class="ch-desc">
+    Analysez la séquence d'Event IDs Windows dans le Security Log ci-dessous. Identifiez la <strong>technique d'attaque</strong> utilisée par les attaquants pour obtenir un accès administrateur, et déterminez le <strong>nom du compte créé</strong>.
+  </div>
+  <div class="artifact">
+    <div class="artifact-header"><span class="artifact-icon">🪟</span> Windows Security Event Log — SRV-DC01 — 08h14-08h16 UTC</div>
+    <div class="artifact-body">
+<span class="art-ts">08:14:01Z</span> EventID=<span class="art-hl">4625</span> Account=<span class="art-ip">svc_backup</span>  Status=0xC000006D  IP=<span class="art-ip">10.0.14.22</span>
+<span class="art-ts">08:14:03Z</span> EventID=<span class="art-hl">4625</span> Account=<span class="art-ip">svc_backup</span>  Status=0xC000006D  IP=<span class="art-ip">10.0.14.22</span>
+<span class="art-ts">08:14:05Z</span> EventID=<span class="art-hl">4625</span> Account=<span class="art-ip">svc_backup</span>  Status=0xC000006D  IP=<span class="art-ip">10.0.14.22</span>
+<span class="art-c">... × 44 tentatives supplémentaires ...</span>
+<span class="art-ts">08:14:51Z</span> EventID=<span class="art-ok">4624</span> Account=<span class="art-ip">svc_backup</span>  LogonType=3    IP=<span class="art-ip">10.0.14.22</span>
+<span class="art-ts">08:15:02Z</span> EventID=<span class="art-hl">4732</span> MemberName=<span class="art-kw">svc_darkh4rv</span>  GroupName=<span class="art-kw">Administrators</span>
+<span class="art-ts">08:15:14Z</span> EventID=<span class="art-hl">4688</span> ProcessName=<span class="art-kw">powershell.exe</span>  CommandLine=<span class="art-val">-enc JABjAGw...</span>
+<span class="art-ts">08:15:29Z</span> EventID=<span class="art-hl">7045</span> ServiceName=<span class="art-kw">WindowsUpdateHelper</span>
+    </div>
+  </div>
+  <div class="flag-zone">
+    <div class="flag-label">▶ ENTREZ LE FLAG</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{T3CHN1QU3_C0MPT3CR33}</span> — technique en 1 mot + nom du compte ajouté aux admins</div>
+    <div class="flag-input-row">
+      <input class="flag-input" id="flag-c7" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
+      <button class="submit-btn" onclick="submitFlag('c7','FL4G{BRUT3F0RC3_SVC_D4RKH4RV}','47 × Event 4625 (échecs) → 1 × Event 4624 (succès) = brute force réussi sur svc_backup. Puis Event 4732 = ajout du compte backdoor svc_darkh4rv au groupe Administrators. Séquence classique d\'escalade post-compromission.',125)">SUBMIT</button>
+    </div>
+    <div class="flag-feedback" id="fb-c7"></div>
+    <div style="margin-top:12px">
+      <button class="hint-btn" onclick="showHint('h7')">💡 HINT (-25 pts)</button>
+      <div class="hint-box" id="h7"><div class="hint-cost">Coût : -25 points</div>4625 en masse puis 4624 = une technique bien connue. 4732 = quel compte a été ajouté au groupe Administrators ?</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+  C8 — LOG-02 : DNS HUNT
+══════════════════════════════════ -->
+<div class="chal-page" id="c8">
+  <div class="ch-header">
+    <div class="ch-title-wrap">
+      <div class="ch-cat"><span class="cat-badge cat-logs">LOGS</span></div>
+      <div class="ch-title">LOG-02 · DNS C2 Hunt</div>
+      <div class="ch-meta"><span>Difficulté : DIFFICILE</span><span>|</span><span>DNS Logs · DGA Detection</span></div>
+    </div>
+    <div class="ch-pts-badge pts-red">200<div style="font-size:11px;font-family:'Share Tech Mono',monospace;font-weight:400;opacity:.7">PTS</div></div>
+  </div>
+  <div class="ch-desc">
+    L'analyse DNS de SRV-DC01 révèle un comportement anormal. Parmi les domaines contactés, identifiez le <strong>serveur C2 (Command & Control)</strong> réel utilisé par le malware, en distinguant les requêtes DGA (NXDOMAIN) des domaines C2 légitimes résolus.
+    <br><br>Trouvez la <strong>seule IP de C2 qui a répondu avec succès</strong> (status NOERROR).
+  </div>
+  <div class="artifact">
+    <div class="artifact-header"><span class="artifact-icon">🌐</span> DNS Query Log — SRV-DC01 — 08h15-08h30 UTC (extrait)</div>
+    <div class="artifact-body">
+<span class="art-ts">08:15:30Z</span> <span class="art-val">xK3mN9pQrT2w.evil.net</span>      NXDOMAIN <span class="art-c">← DGA</span>
+<span class="art-ts">08:15:31Z</span> <span class="art-val">aB7vF4hJk5Lm.evil.net</span>      NXDOMAIN <span class="art-c">← DGA</span>
+<span class="art-ts">08:15:32Z</span> <span class="art-val">qW2eR8tY6uIo.evil.net</span>      NXDOMAIN <span class="art-c">← DGA</span>
+<span class="art-ts">08:15:33Z</span> <span class="art-val">zX1cV5bN3mAs.evil.net</span>      NXDOMAIN <span class="art-c">← DGA</span>
+<span class="art-ts">08:15:34Z</span> <span class="art-val">windows-update.microsoft-cdn.com</span> NOERROR → <span class="art-kw">185.220.101.47</span>
+<span class="art-ts">08:15:35Z</span> <span class="art-val">lP9oK7jH6gFd.evil.net</span>      NXDOMAIN <span class="art-c">← DGA</span>
+<span class="art-ts">08:16:00Z</span> BEACON → <span class="art-ip">185.220.101.47</span>:443 <span class="art-c">← 1er heartbeat C2</span>
+<span class="art-c">... 347 requêtes NXDOMAIN supplémentaires ...</span>
+
+<span class="art-c">
+Note : "windows-update.microsoft-cdn.com" est un domaine
+USURPÉ — ce n'est pas un domaine Microsoft légitime.
+L'IP résolue appartient au C2 des attaquants.
+Vrai Microsoft Update = windowsupdate.microsoft.com</span>
+    </div>
+  </div>
+  <div class="flag-zone">
+    <div class="flag-label">▶ ENTREZ LE FLAG</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{1P_C2}</span> — l'adresse IP du serveur C2</div>
+    <div class="flag-input-row">
+      <input class="flag-input" id="flag-c8" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
+      <button class="submit-btn" onclick="submitFlag('c8','FL4G{185.220.101.47}','185.220.101.47 est l\'IP du serveur C2. Le domaine windows-update.microsoft-cdn.com est un typosquatting du domaine légitime Microsoft. Les 350+ requêtes NXDOMAIN = algorithme DGA qui cherche son serveur C2 actif du jour.',200)">SUBMIT</button>
+    </div>
+    <div class="flag-feedback" id="fb-c8"></div>
+    <div style="margin-top:12px">
+      <button class="hint-btn" onclick="showHint('h8')">💡 HINT (-25 pts)</button>
+      <div class="hint-box" id="h8"><div class="hint-cost">Coût : -25 points</div>NXDOMAIN = domaine inexistant (DGA cherche son C2 actif). NOERROR = domaine trouvé et IP résolue. Cherchez la seule requête NOERROR dans les logs. L'IP résolue est le serveur C2.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+  C9 — LOG-03 : FIREWALL RULES
+══════════════════════════════════ -->
+<div class="chal-page" id="c9">
+  <div class="ch-header">
+    <div class="ch-title-wrap">
+      <div class="ch-cat"><span class="cat-badge cat-logs">LOGS</span></div>
+      <div class="ch-title">LOG-03 · Firewall Log Analysis</div>
+      <div class="ch-meta"><span>Difficulté : FACILE</span><span>|</span><span>Firewall Logs · Ports</span></div>
+    </div>
+    <div class="ch-pts-badge pts-yellow">125<div style="font-size:11px;font-family:'Share Tech Mono',monospace;font-weight:400;opacity:.7">PTS</div></div>
+  </div>
+  <div class="ch-desc">
+    L'équipe réseau a exporté les logs du firewall périmétrique. Analysez les entrées et identifiez <strong>quel port n'aurait jamais dû être autorisé en entrée WAN</strong> (présent et autorisé mais classé critique à bloquer).
+    <br><br>Trouvez le <strong>numéro de port dangereux qui est AUTORISÉ</strong> dans ce log alors qu'il devrait être bloqué.
+  </div>
+  <div class="artifact">
+    <div class="artifact-header"><span class="artifact-icon">🔥</span> Perimeter Firewall Log — CorpTech SA — 08h00-09h00 UTC</div>
+    <div class="artifact-body">
+<span class="art-c">Interface │ Time     │ Source           │ Destination      │ Port │ Action</span>
+<span class="art-c">──────────┼──────────┼──────────────────┼──────────────────┼──────┼────────────</span>
+<span class="art-kw">WAN</span>       │ 08:14.05 │ <span class="art-ip">131.107.2.1</span>      │ <span class="art-ip">195.11.1.1</span>        │ <span class="art-hl">445</span>  │ <span class="art-kw">DEFAULT DENY</span>
+<span class="art-kw">WAN</span>       │ 08:14.12 │ <span class="art-ip">131.107.2.1</span>      │ <span class="art-ip">195.11.1.1</span>        │ <span class="art-hl">139</span>  │ <span class="art-kw">DEFAULT DENY</span>
+<span class="art-val">WAN</span>       │ 08:14.18 │ <span class="art-ip">10.0.14.22</span>       │ <span class="art-ip">195.11.1.1</span>        │ <span class="art-val">443</span>  │ <span class="art-ok">ALLOW</span>
+<span class="art-kw">WAN</span>       │ 08:14.22 │ <span class="art-ip">185.220.101.47</span>   │ <span class="art-ip">195.11.1.1</span>        │ <span class="art-hl">3389</span> │ <span class="art-ok">ALLOW !</span>  <span class="art-c">← ?</span>
+<span class="art-val">WAN</span>       │ 08:14.36 │ <span class="art-ip">10.0.0.1</span>         │ <span class="art-ip">172.16.0.1</span>        │ <span class="art-val">80</span>   │ <span class="art-ok">ALLOW LAN</span>
+<span class="art-val">WAN</span>       │ 08:14.43 │ <span class="art-ip">10.0.0.1</span>         │ <span class="art-ip">172.16.0.1</span>        │ <span class="art-val">25</span>   │ <span class="art-ok">ALLOW LAN</span>
+
+<span class="art-c">Ports connus :
+  445 = SMB (EternalBlue/WannaCry) | 139 = NetBIOS
+  443 = HTTPS | 80 = HTTP | 25 = SMTP | 3389 = ???</span>
+    </div>
+  </div>
+  <div class="flag-zone">
+    <div class="flag-label">▶ ENTREZ LE FLAG</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{P0RT_S3RV1C3}</span> — numéro du port dangereux autorisé et nom du service</div>
+    <div class="flag-input-row">
+      <input class="flag-input" id="flag-c9" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
+      <button class="submit-btn" onclick="submitFlag('c9','FL4G{3389_RDP}','Port 3389 = RDP (Remote Desktop Protocol) — autorisé depuis l\'IP C2 185.220.101.47 ! C\'est le vecteur d\'accès initial. RDP exposé sur Internet sans VPN ni MFA = porte d\'entrée directe pour ransomware. Doit être strictement bloqué en entrée WAN.',125)">SUBMIT</button>
+    </div>
+    <div class="flag-feedback" id="fb-c9"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+  C10 — NET-01 : PCAP ANALYSIS
+══════════════════════════════════ -->
+<div class="chal-page" id="c10">
+  <div class="ch-header">
+    <div class="ch-title-wrap">
+      <div class="ch-cat"><span class="cat-badge cat-pcap">PCAP</span></div>
+      <div class="ch-title">NET-01 · PCAP Analysis</div>
+      <div class="ch-meta"><span>Difficulté : DIFFICILE</span><span>|</span><span>Wireshark · tcpdump</span></div>
+    </div>
+    <div class="ch-pts-badge pts-red">175<div style="font-size:11px;font-family:'Share Tech Mono',monospace;font-weight:400;opacity:.7">PTS</div></div>
+  </div>
+  <div class="ch-desc">
+    Zeek a analysé la capture réseau de SRV-DC01. L'output de <code>conn.log</code> révèle un comportement de beaconing caractéristique d'un C2. Identifiez le <strong>protocole utilisé pour le C2</strong> et l'<strong>intervalle exact en secondes entre les beacons</strong>.
+  </div>
+  <div class="artifact">
+    <div class="artifact-header"><span class="artifact-icon">📡</span> Zeek conn.log — SRV-DC01 — Trafic C2 (extrait)</div>
+    <div class="artifact-body">
+<span class="art-c">ts           orig_h        orig_p  resp_h           resp_p proto  dur    bytes  state</span>
+<span class="art-ts">08:16:00.000</span> <span class="art-ip">10.0.1.10</span>     49231   <span class="art-ip">185.220.101.47</span>   443    <span class="art-val">tcp</span>    0.42   1247   SF
+<span class="art-ts">08:16:30.000</span> <span class="art-ip">10.0.1.10</span>     49232   <span class="art-ip">185.220.101.47</span>   443    <span class="art-val">tcp</span>    0.38   1251   SF
+<span class="art-ts">08:17:00.000</span> <span class="art-ip">10.0.1.10</span>     49233   <span class="art-ip">185.220.101.47</span>   443    <span class="art-val">tcp</span>    0.41   1249   SF
+<span class="art-ts">08:17:30.000</span> <span class="art-ip">10.0.1.10</span>     49234   <span class="art-ip">185.220.101.47</span>   443    <span class="art-val">tcp</span>    0.39   1248   SF
+<span class="art-ts">08:18:00.000</span> <span class="art-ip">10.0.1.10</span>     49235   <span class="art-ip">185.220.101.47</span>   443    <span class="art-val">tcp</span>    0.43   1250   SF
+
+<span class="art-c">Filtre Wireshark correspondant :</span>
+ip.dst == <span class="art-ip">185.220.101.47</span> && tcp.dstport == 443
+<span class="art-c">→ 287 paquets sur 2h24 · Intervalle régulier suspect</span>
+    </div>
+  </div>
+  <div class="interactive-frame">
+    <div class="int-label">⚡ ANALYSEUR DE BEACONING</div>
+    <div style="display:flex;gap:10px;margin-bottom:10px">
+      <input type="number" id="b-t1" value="0" style="width:80px;background:#020a05;border:1px solid var(--border2);color:var(--green);font-family:'Share Tech Mono',monospace;font-size:12px;padding:6px;border-radius:4px;outline:none" placeholder="T1(s)">
+      <input type="number" id="b-t2" value="30" style="width:80px;background:#020a05;border:1px solid var(--border2);color:var(--green);font-family:'Share Tech Mono',monospace;font-size:12px;padding:6px;border-radius:4px;outline:none" placeholder="T2(s)">
+      <input type="number" id="b-t3" value="60" style="width:80px;background:#020a05;border:1px solid var(--border2);color:var(--green);font-family:'Share Tech Mono',monospace;font-size:12px;padding:6px;border-radius:4px;outline:none" placeholder="T3(s)">
+      <button onclick="calcBeacon()" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--cyan);background:rgba(0,229,255,.07);border:1px solid rgba(0,229,255,.3);border-radius:4px;padding:6px 14px;cursor:pointer">ANALYSER</button>
+    </div>
+    <div class="terminal-output" id="beacon-out">→ Entrez les timestamps (secondes depuis 08:16:00) et cliquez Analyser</div>
+  </div>
+  <div class="flag-zone">
+    <div class="flag-label">▶ ENTREZ LE FLAG</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{PR0T0C0L3_1NT3RV4LL3s}</span> — protocole en majuscules et intervalle en secondes</div>
+    <div class="flag-input-row">
+      <input class="flag-input" id="flag-c10" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
+      <button class="submit-btn" onclick="submitFlag('c10','FL4G{HTTPS_30S}','Le C2 utilise HTTPS (port 443/TCP) avec un beaconing toutes les 30 secondes exactement. La régularité parfaite trahit un malware — le trafic humain est irrégulier. Filtre Wireshark : ip.dst==185.220.101.47 && tcp.dstport==443. Outil de détection : Zeek + RITA.',175)">SUBMIT</button>
+    </div>
+    <div class="flag-feedback" id="fb-c10"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+  C11 — NET-02 : CVSS SCORING
+══════════════════════════════════ -->
+<div class="chal-page" id="c11">
+  <div class="ch-header">
+    <div class="ch-title-wrap">
+      <div class="ch-cat"><span class="cat-badge cat-pcap">VULN</span></div>
+      <div class="ch-title">NET-02 · CVSS Triage</div>
+      <div class="ch-meta"><span>Difficulté : FACILE</span><span>|</span><span>CVSS v3.1 · Priorité de remédiation</span></div>
+    </div>
+    <div class="ch-pts-badge pts-yellow">100<div style="font-size:11px;font-family:'Share Tech Mono',monospace;font-weight:400;opacity:.7">PTS</div></div>
+  </div>
+  <div class="ch-desc">
+    Le scanner Nessus a découvert 4 vulnérabilités sur le réseau CorpTech SA. Priorisez-les et déterminez laquelle doit être patchée <strong>EN PREMIER</strong> selon la formule : <code>Risque = CVSS × Criticité actif × Exposition Internet</code>.
+  </div>
+  <div class="artifact">
+    <div class="artifact-header"><span class="artifact-icon">🔍</span> Nessus Scan Results — CorpTech SA</div>
+    <div class="artifact-body">
+<span class="art-c">ID          │ CVE              │ CVSS │ Actif                    │ Exposé WAN ?</span>
+<span class="art-c">────────────┼──────────────────┼──────┼──────────────────────────┼─────────────</span>
+VULN-001    │ CVE-2021-44228   │ <span class="art-kw">10.0</span> │ Serveur Log4j interne    │ <span class="art-val">Non</span>
+VULN-002    │ CVE-2017-0144    │ <span class="art-hl">8.1</span>  │ Serveur SMB WAN          │ <span class="art-kw">Oui !!!</span>
+VULN-003    │ CVE-2023-XXXX    │ <span class="art-val">6.5</span>  │ Application web publique │ <span class="art-kw">Oui</span>
+VULN-004    │ CVE-2022-YYYY    │ <span class="art-val">4.2</span>  │ Poste de travail local   │ <span class="art-val">Non</span>
+
+<span class="art-c">
+Formule de priorisation :
+  Risque = CVSS Score × [Criticité actif] × [Exposition WAN]
+  
+  Criticité : Critique=1.5 / Élevée=1.2 / Normale=1.0
+  Exposition : Exposé=2.0 / Non exposé=1.0</span>
+    </div>
+  </div>
+  <div class="interactive-frame">
+    <div class="int-label">⚡ CALCULATEUR CVSS RISK SCORE</div>
+    <input type="range" id="cvss-slide" min="0" max="10" step="0.1" value="8.1" oninput="updateCVSSCTF(this.value)" style="width:100%;accent-color:var(--green);margin-bottom:8px;cursor:pointer">
+    <div class="cvss-rail"><div class="cvss-needle" id="cvss-n" style="left:81%" data-v="8.1 — HAUTE"></div></div>
+    <div style="display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px">
+      <span style="color:var(--green)">0 FAIBLE</span><span style="color:var(--yellow)">4.0 MOYEN</span><span style="color:var(--orange)">7.0 HAUTE</span><span style="color:var(--red)">9.0 CRITIQUE</span>
+    </div>
+    <div class="terminal-output mt" id="cvss-out" style="font-size:11px">→ Déplacez le curseur pour simuler le score et calculer la priorité</div>
+  </div>
+  <div class="flag-zone">
+    <div class="flag-label">▶ ENTREZ LE FLAG</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{VULN-XXX}</span> — ID de la vulnérabilité à patcher en premier</div>
+    <div class="flag-input-row">
+      <input class="flag-input" id="flag-c11" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
+      <button class="submit-btn" onclick="submitFlag('c11','FL4G{VULN-002}','VULN-002 : CVSS 8.1 × Exposition WAN (×2.0) = Score 16.2 · VULN-001 : CVSS 10.0 × Non exposé (×1.0) = Score 10.0 · VULN-002 gagne malgré un CVSS plus faible car l\'exposition WAN double le risque réel. Un CVE sur SMB exposé sur Internet = WannaCry scenario.',100)">SUBMIT</button>
+    </div>
+    <div class="flag-feedback" id="fb-c11"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+  C12 — FINAL : LA TIMELINE
+══════════════════════════════════ -->
+<div class="chal-page" id="c12">
+  <div class="ch-header">
+    <div class="ch-title-wrap">
+      <div class="ch-cat"><span class="cat-badge cat-ir" style="background:rgba(255,23,68,.07);border-color:rgba(255,23,68,.3);color:var(--red)">FINAL</span></div>
+      <div class="ch-title">FINAL · Reconstitution de la Timeline</div>
+      <div class="ch-meta"><span>Difficulté : DIFFICILE</span><span>|</span><span>Time Normalization · Synthèse</span></div>
+    </div>
+    <div class="ch-pts-badge pts-red">175<div style="font-size:11px;font-family:'Share Tech Mono',monospace;font-weight:400;opacity:.7">PTS</div></div>
+  </div>
+  <div class="ch-desc">
+    Vous avez accès aux logs de <strong>trois systèmes avec des fuseaux horaires différents</strong>. Normalisez tous les timestamps en UTC et déterminez <strong>l'heure UTC exacte du premier accès RDP non autorisé</strong> depuis l'IP C2.
+  </div>
+  <div class="artifact">
+    <div class="artifact-header"><span class="artifact-icon">⏱</span> Multi-System Logs — FUSEAUX DIFFÉRENTS</div>
+    <div class="artifact-body">
+<span class="art-c">═══ SYSTÈME 1 : SRV-DC01 (CET = UTC+1) ═══</span>
+<span class="art-ts">09:14:00 CET</span>  EventID=4624 LogonType=10 Account=svc_backup  <span class="art-c">← RDP login</span>
+<span class="art-ts">09:15:02 CET</span>  EventID=4732 MemberName=svc_darkh4rv
+
+<span class="art-c">═══ SYSTÈME 2 : FW-PERIMETER (UTC) ═══</span>
+<span class="art-ts">08:14:22 UTC</span>  Port=3389 Src=<span class="art-ip">185.220.101.47</span> Action=ALLOW  <span class="art-c">← connexion RDP</span>
+<span class="art-ts">08:16:00 UTC</span>  Port=443  Src=<span class="art-ip">10.0.1.10</span> Beacon#1
+
+<span class="art-c">═══ SYSTÈME 3 : BACKUP-SRV (EST = UTC-5) ═══</span>
+<span class="art-ts">03:14:00 EST</span>  Backup snapshot triggered
+<span class="art-ts">03:15:00 EST</span>  Lateral movement detected → SRV-BACKUP
+
+<span class="art-c">
+⚠ Question : Quelle est l'heure UTC exacte du premier accès
+  RDP non autorisé depuis 185.220.101.47 ?
+
+  Rappel conversions :
+    CET (UTC+1) → UTC : soustraire 1 heure
+    EST (UTC-5) → UTC : ajouter 5 heures</span>
+    </div>
+  </div>
+  <div class="interactive-frame">
+    <div class="int-label">⚡ NORMALISATEUR TEMPOREL</div>
+    <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;flex-wrap:wrap">
+      <input class="hash-ti" id="tz-time" value="09:14:00" placeholder="HH:MM:SS" style="width:100px">
+      <select id="tz-zone" style="background:#020a05;border:1px solid var(--border2);color:var(--green);font-family:'Share Tech Mono',monospace;font-size:11px;padding:8px;border-radius:4px;outline:none">
+        <option value="1">CET (UTC+1)</option>
+        <option value="0">UTC</option>
+        <option value="-5">EST (UTC-5)</option>
+      </select>
+      <button onclick="convertTZ()" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--cyan);background:rgba(0,229,255,.07);border:1px solid rgba(0,229,255,.3);border-radius:4px;padding:8px 14px;cursor:pointer">CONVERTIR → UTC</button>
+    </div>
+    <div class="hash-result-box" id="tz-out">→ Résultat UTC</div>
+  </div>
+  <div class="flag-zone">
+    <div class="flag-label">▶ ENTREZ LE FLAG FINAL</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{UTC_HH:MM:SS}</span> — heure UTC du premier accès RDP non autorisé</div>
+    <div class="flag-input-row">
+      <input class="flag-input" id="flag-c12" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
+      <button class="submit-btn" onclick="submitFlag('c12','FL4G{UTC_08:14:22}','Réponse : FW-PERIMETER log à 08:14:22 UTC — connexion RDP port 3389 depuis 185.220.101.47 autorisée. Le log DC01 (09:14:00 CET) converti en UTC donne 08:14:00 UTC = login RDP réussi 22s après l\'ouverture de connexion par le firewall. Time normalization : CET−1h = UTC.',175)">SUBMIT</button>
+    </div>
+    <div class="flag-feedback" id="fb-c12"></div>
+    <div style="margin-top:12px">
+      <button class="hint-btn" onclick="showHint('h12')">💡 HINT (-25 pts)</button>
+      <div class="hint-box" id="h12"><div class="hint-cost">Coût : -25 points</div>FW-PERIMETER est déjà en UTC. Cherchez dans ce système la première entrée qui correspond à un accès RDP (port 3389) depuis l'IP C2 que vous avez identifiée au challenge LOG-02.</div>
+    </div>
+  </div>
+</div>
+
+  </div><!-- /chal-area -->
+</div><!-- /ctf-layout -->
+
+<script>
+// ════════════════════════════════════════
+// FIREBASE CONFIG
+// INSTRUCTIONS :
+// 1. Allez sur https://console.firebase.google.com
+// 2. Créez un projet → Activez Authentication → Email/Password
+// 3. Créez une base Firestore (mode test)
+// 4. Paramètres projet → Vos applications → Web → copiez la config
+// ════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "VOTRE_API_KEY",
+  authDomain: "VOTRE_PROJECT.firebaseapp.com",
+  projectId: "VOTRE_PROJECT_ID",
+  storageBucket: "VOTRE_PROJECT.appspot.com",
+  messagingSenderId: "VOTRE_SENDER_ID",
+  appId: "VOTRE_APP_ID"
+};
+const ADMIN_EMAIL = "badousadia0104@gmail.com";
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+let currentUser = null;
+let playerName = '';
+let bootDone = false;
+
+// ── TABS ──
+function switchTab(tab, btn){
+  document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.auth-form').forEach(f=>f.classList.remove('active'));
+  document.getElementById('auth-'+tab).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── LOGIN ──
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const err=document.getElementById('login-err');
+  err.textContent='';
+  try{await auth.signInWithEmailAndPassword(email,pass);}
+  catch(e){
+    err.textContent=e.code==='auth/wrong-password'?'✗ Mot de passe incorrect':
+                    e.code==='auth/user-not-found'?'✗ Compte introuvable':
+                    e.code==='auth/invalid-email'?'✗ Email invalide':
+                    '✗ '+e.message;
+  }
+}
+
+// ── REGISTER ──
+async function doRegister(){
+  const name=document.getElementById('reg-name').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pass=document.getElementById('reg-pass').value;
+  const err=document.getElementById('reg-err');
+  err.textContent='';
+  if(!name){err.textContent='✗ Pseudo requis';return;}
+  if(name.length<3){err.textContent='✗ Pseudo trop court (3 min)';return;}
+  try{
+    const cred=await auth.createUserWithEmailAndPassword(email,pass);
+    await db.collection('players').doc(cred.user.uid).set({
+      name,email,score:0,solved:{},hints:{},time:0,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }catch(e){
+    err.textContent=e.code==='auth/email-already-in-use'?'✗ Email déjà utilisé':
+                    e.code==='auth/weak-password'?'✗ Mot de passe trop court (6 min)':
+                    e.code==='auth/invalid-email'?'✗ Email invalide':
+                    '✗ '+e.message;
+  }
+}
+
+// ── LOGOUT ──
+async function doLogout(){await auth.signOut();location.reload();}
+
+// ── LOAD PROGRESS FROM FIRESTORE ──
+async function loadProgress(){
+  if(!currentUser)return;
+  try{
+    const snap=await db.collection('players').doc(currentUser.uid).get();
+    if(!snap.exists)return;
+    const d=snap.data();
+    playerName=d.name||currentUser.email;
+    totalScore=d.score||0;
+    solved=d.solved||{};
+    hints=d.hints||{};
+    timerSec=d.time||0;
+    document.getElementById('hdr-score').textContent=totalScore;
+    document.getElementById('hdr-user').textContent=playerName;
+    const sc=Object.keys(solved).filter(k=>solved[k]).length;
+    document.getElementById('solved-count').textContent=sc;
+    document.getElementById('prog-txt').textContent=sc+'/12';
+    document.getElementById('prog-bar').style.width=(sc/12*100)+'%';
+    for(const cid in solved){
+      if(!solved[cid])continue;
+      const nav=document.getElementById('nav-'+cid);
+      if(nav)nav.classList.add('solved');
+      const st=document.getElementById('st-'+cid);
+      if(st){st.style.background='var(--green)';st.style.borderColor='var(--green)';st.style.boxShadow='0 0 6px var(--green)';}
+      const btn=document.querySelector('#'+cid+' .submit-btn');
+      if(btn)btn.disabled=true;
+      const inp=document.getElementById('flag-'+cid);
+      if(inp){inp.value='[ SOLVED ]';inp.classList.add('correct');}
+    }
+  }catch(e){console.error('loadProgress:',e);}
+}
+
+// ── SAVE PROGRESS TO FIRESTORE ──
+async function saveProgress(){
+  if(!currentUser)return;
+  try{
+    await db.collection('players').doc(currentUser.uid).set({
+      name:playerName,email:currentUser.email,
+      score:totalScore,solved,hints,time:timerSec,
+      lastUpdated:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true});
+  }catch(e){console.error('saveProgress:',e);}
+}
+
+// ── AUTH STATE LISTENER ──
+auth.onAuthStateChanged(async(user)=>{
+  if(user){
+    currentUser=user;
+    document.getElementById('auth-screen').style.display='none';
+    if(user.email===ADMIN_EMAIL)document.getElementById('admin-btn').style.display='inline-block';
+    await loadProgress();
+    if(!bootDone){bootDone=true;setTimeout(printLine,400);}
+  }else{
+    document.getElementById('auth-screen').style.display='flex';
+  }
+});
+
+// ════════════════════════════════════════
+// MATRIX RAIN
+// ════════════════════════════════════════
+(function(){
+  const c=document.getElementById('matrix-canvas');
+  const ctx=c.getContext('2d');
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight}
+  resize();window.addEventListener('resize',resize);
+  const chars='アイウエオカキクケコサシスセソタチツテトナニヌネノABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const cols=Math.floor(window.innerWidth/16);
+  const drops=Array(cols).fill(1);
+  setInterval(()=>{
+    ctx.fillStyle='rgba(2,4,8,.05)';ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle='#00ff41';ctx.font='14px Share Tech Mono';
+    drops.forEach((y,i)=>{
+      ctx.fillText(chars[Math.floor(Math.random()*chars.length)],i*16,y*16);
+      if(y*16>c.height&&Math.random()>.975)drops[i]=0;
+      drops[i]++;
+    });
+  },50);
+})();
+
+// ════════════════════════════════════════
+// BOOT SEQUENCE
+// ════════════════════════════════════════
+const bootLines=[
+  '<span class="dim">[  0.001]</span> GOMYCODE SEC-OPS CTF v2.0 initializing...',
+  '<span class="dim">[  0.014]</span> Loading security modules... <span style="color:#00ff41">OK</span>',
+  '<span class="dim">[  0.029]</span> Mounting evidence filesystem... <span style="color:#00ff41">OK</span>',
+  '<span class="dim">[  0.041]</span> Connecting to case database INC-2026-00142...',
+  '<span class="dim">[  0.055]</span> <span style="color:#ff1744">ALERT</span>: Compromise detected on SRV-DC01 at 08:14:00Z',
+  '<span class="dim">[  0.068]</span> Loading IR playbooks... <span style="color:#00ff41">OK</span>',
+  '<span class="dim">[  0.082]</span> Initializing forensic toolkit: Autopsy, Volatility, Zeek...',
+  '<span class="dim">[  0.099]</span> Importing network captures... <span style="color:#00ff41">OK</span>',
+  '<span class="dim">[  0.113]</span> <span style="color:#ffe600">WARNING</span>: 72h of attacker activity to reconstruct',
+  '<span class="dim">[  0.128]</span> Challenge engine loaded: <span style="color:#00ff41">12 challenges</span> / 1600 pts',
+  '<span class="dim">[  0.140]</span> ─────────────────────────────────────────────',
+  '<span class="dim">[  0.141]</span> <span style="color:#00ff41">OPERATION : DARK HARVEST</span>',
+  '<span class="dim">[  0.142]</span> Find the attacker. Reconstruct the timeline.',
+  '<span class="dim">[  0.143]</span> <span style="color:#00ff41">Good luck, analyst.</span>',
+  '<span class="dim">[  0.144]</span> ─────────────────────────────────────────────',
+  '<span class="dim">[  0.160]</span> Launching CTF interface<span id="boot-dots"></span>',
+];
+let li=0;
+const bt=document.getElementById('boot-text');
+function printLine(){
+  if(li<bootLines.length){
+    bt.innerHTML+=bootLines[li]+'<br>';li++;
+    setTimeout(printLine,li<10?80:li<14?120:200);
+  }else{
+    setTimeout(launch,800);
+  }
+}
+function launch(){
+  document.getElementById('boot').style.animation='fadeIn .5s reverse forwards';
+  setTimeout(()=>{
+    document.getElementById('boot').style.display='none';
+    document.getElementById('main-header').style.display='flex';
+    document.getElementById('main-brief').style.display='block';
+    document.getElementById('main-layout').style.display='grid';
+    startTimer();
+  },500);
+}
+// printLine est déclenché par auth.onAuthStateChanged après connexion
+
+// ════════════════════════════════════════
+// TIMER
+// ════════════════════════════════════════
+let timerSec=0,timerInterval;
+function startTimer(){
+  timerInterval=setInterval(()=>{
+    timerSec++;
+    const h=Math.floor(timerSec/3600).toString().padStart(2,'0');
+    const m=Math.floor((timerSec%3600)/60).toString().padStart(2,'0');
+    const s=(timerSec%60).toString().padStart(2,'0');
+    document.getElementById('hdr-timer').textContent=h+':'+m+':'+s;
+  },1000);
+}
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let totalScore=0;
+let solved={};
+let hints={};
+const pts={c1:100,c2:150,c3:125,c4:100,c5:175,c6:150,c7:125,c8:200,c9:125,c10:175,c11:100,c12:175};
+
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+function showChallenge(id){
+  document.querySelectorAll('.chal-page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.chal-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('nav-'+id).classList.add('active');
+}
+
+// ════════════════════════════════════════
+// FLAG SUBMISSION
+// ════════════════════════════════════════
+function submitFlag(cid,correct,explanation,points){
+  if(solved[cid]){return;}
+  const inp=document.getElementById('flag-'+cid);
+  const fb=document.getElementById('fb-'+cid);
+  const val=inp.value.trim().toUpperCase();
+  if(val===correct.toUpperCase()){
+    // CORRECT
+    solved[cid]=true;
+    let earned=points-(hints[cid]||0)*25;
+    if(earned<0)earned=10;
+    totalScore+=earned;
+    // UI
+    inp.classList.add('correct');
+    fb.className='flag-feedback ok';
+    fb.innerHTML='🚩 FLAG ACCEPTED! +'+earned+' pts — '+explanation;
+    document.querySelector(`#${cid} .submit-btn`).disabled=true;
+    // Sidebar update
+    const nav=document.getElementById('nav-'+cid);
+    nav.classList.add('solved');
+    const st=document.getElementById('st-'+cid);
+    st.style.background='var(--green)';
+    st.style.borderColor='var(--green)';
+    st.style.boxShadow='0 0 6px var(--green)';
+    // Header score
+    document.getElementById('hdr-score').textContent=totalScore;
+    // Solved count
+    const sc=Object.keys(solved).length;
+    document.getElementById('solved-count').textContent=sc;
+    document.getElementById('prog-txt').textContent=sc+'/12';
+    document.getElementById('prog-bar').style.width=(sc/12*100)+'%';
+    // Explosion
+    triggerExplosion();
+    // Save to Firebase
+    saveProgress();
+    // Show solved banner
+    const zone=document.getElementById('flag-'+cid).closest('.flag-zone');
+    const banner=document.createElement('div');
+    banner.className='solved-banner';
+    banner.innerHTML=`<div class="solved-icon">🚩</div><div class="solved-text">CHALLENGE SOLVED<br><span style="color:var(--muted);font-size:10px">${cid.toUpperCase()}</span></div><div class="solved-pts">+${earned}</div>`;
+    zone.parentNode.insertBefore(banner,zone);
+    // Check win
+    if(sc===12) setTimeout(showWin,1000);
+  } else {
+    inp.classList.add('wrong');
+    fb.className='flag-feedback ko';
+    fb.innerHTML='✗ INVALID FLAG. Vérifiez le format et réessayez.';
+    setTimeout(()=>{inp.classList.remove('wrong');fb.className='flag-feedback ko';fb.innerHTML='';},2000);
+  }
+}
+
+function triggerExplosion(){
+  const el=document.getElementById('flag-explode');
+  el.style.display='block';
+  setTimeout(()=>{el.style.display='none';},900);
+}
+
+// ════════════════════════════════════════
+// HINTS
+// ════════════════════════════════════════
+function showHint(hid){
+  const box=document.getElementById(hid);
+  if(box.style.display==='block')return;
+  box.style.display='block';
+  const cid='c'+hid.replace('h','');
+  if(!hints[cid])hints[cid]=1;
+  // deduct
+  if(!solved[cid]){
+    totalScore=Math.max(0,totalScore-0); // only deduct on submission
+  }
+}
+
+// ════════════════════════════════════════
+// INTERACTIVE TOOLS
+// ════════════════════════════════════════
+// RPO Calculator
+function calcRPO(){
+  const backup=parseInt(document.getElementById('rpo-backup').value)||0;
+  const panneH=parseInt(document.getElementById('rpo-panne').value)||8;
+  const sla=parseInt(document.getElementById('rpo-sla').value)||3;
+  const lostH=panneH-backup;
+  const lostMin=14; // fixed minutes
+  const out=document.getElementById('rpo-out');
+  const ok=lostH*60+lostMin<=sla*60;
+  out.innerHTML=`<span style="color:var(--muted)">Panne à ${panneH}h14 · Dernier backup à ${backup}h00</span>
+<span style="color:var(--green)">→ Données perdues : ${lostH}h${lostMin}min</span>
+<span style="color:${ok?'var(--green)':'var(--red)'}">→ RPO ${sla}h : ${ok?'RESPECTED ✓':'VIOLATED ✗'}</span>
+${!ok?'<span style="color:var(--red)">→ Dépassement : '+(lostH*60+lostMin-sla*60)+'min</span>':''}`;
+}
+calcRPO();
+
+// Hash tool
+async function hashCheck(){
+  const t=document.getElementById('h-input').value;
+  if(!t){document.getElementById('h-output').textContent='→ Entrez un texte';return;}
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));
+  const hex=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  document.getElementById('h-output').textContent=hex;
+}
+
+// Beacon analyzer
+function calcBeacon(){
+  const t=[
+    parseInt(document.getElementById('b-t1').value)||0,
+    parseInt(document.getElementById('b-t2').value)||30,
+    parseInt(document.getElementById('b-t3').value)||60
+  ];
+  const i1=t[1]-t[0],i2=t[2]-t[1];
+  const out=document.getElementById('beacon-out');
+  if(i1===i2){
+    out.innerHTML=`<span style="color:var(--green)">Intervalle régulier détecté : ${i1} secondes</span>
+<span style="color:var(--red)">⚠ BEACONING CONFIRMÉ — C2 actif toutes les ${i1}s</span>
+<span style="color:var(--muted)">Filtre Wireshark : tcp.dstport==443 && ip.dst==185.220.101.47</span>`;
+  } else {
+    out.innerHTML=`<span style="color:var(--yellow)">Intervalles irréguliers : ${i1}s et ${i2}s</span>
+<span style="color:var(--muted)">Trafic humain ou beaconing avec jitter...</span>`;
+  }
+}
+
+// CVSS CTF
+function updateCVSSCTF(v){
+  v=parseFloat(v);
+  const n=document.getElementById('cvss-n');
+  n.style.left=(v/10*100)+'%';
+  let sev='',color='',delay='';
+  if(v>=9){sev='CRITIQUE';color='var(--red)';delay='24-48h MAX';}
+  else if(v>=7){sev='HAUTE';color='var(--orange)';delay='72h';}
+  else if(v>=4){sev='MOYENNE';color='var(--yellow)';delay='Cycle mensuel';}
+  else{sev='FAIBLE';color='var(--green)';delay='Prochaine maintenance';}
+  n.setAttribute('data-v',v.toFixed(1)+' — '+sev);
+  document.getElementById('cvss-out').innerHTML=`Score : <span style="color:${color}">${v.toFixed(1)} (${sev})</span> · Délai : <span style="color:${color}">${delay}</span>`;
+}
+updateCVSSCTF(8.1);
+
+// Time converter
+function convertTZ(){
+  const t=document.getElementById('tz-time').value;
+  const offset=parseInt(document.getElementById('tz-zone').value);
+  const [h,m,s]=(t||'00:00:00').split(':').map(Number);
+  let utcH=h-offset;
+  if(utcH<0)utcH+=24;if(utcH>=24)utcH-=24;
+  const res=utcH.toString().padStart(2,'0')+':'+m.toString().padStart(2,'0')+':'+s.toString().padStart(2,'0')+' UTC';
+  document.getElementById('tz-out').innerHTML=`<span style="color:var(--green)">${res}</span>`;
+}
+
+// ════════════════════════════════════════
+// SCOREBOARD (Firebase — données réelles)
+// ════════════════════════════════════════
+async function openScoreboard(){
+  const sb=document.getElementById('scoreboard');
+  const content=document.getElementById('sb-content');
+  content.innerHTML='<div style="color:var(--muted);text-align:center;padding:30px;font-family:\'Share Tech Mono\',monospace;font-size:11px;letter-spacing:2px">CHARGEMENT...</div>';
+  sb.style.display='flex';
+  try{
+    const snap=await db.collection('players').orderBy('score','desc').limit(20).get();
+    const colors=['#ffe600','#c0c0c0','#cd7f32'];
+    let html='';
+    snap.docs.forEach((doc,i)=>{
+      const d=doc.data();
+      const sc=Object.keys(d.solved||{}).filter(k=>d.solved[k]).length;
+      const rank=i<3?['🥇','🥈','🥉'][i]:'#'+(i+1);
+      const isYou=doc.id===currentUser?.uid;
+      html+=`<div class="sb-row" style="${isYou?'border-color:rgba(0,255,65,.4);background:rgba(0,255,65,.05)':''}">
+        <div class="sb-rank" style="color:${colors[i]||'var(--muted)'}">${rank}</div>
+        <div class="sb-name" style="${isYou?'color:var(--green)':''}">${d.name||'Anonyme'}${isYou?' ← YOU':''}</div>
+        <div class="sb-solved" style="margin-right:12px">${sc}/12</div>
+        <div class="sb-score">${d.score||0}</div>
+      </div>`;
+    });
+    content.innerHTML=html||'<div style="color:var(--muted);text-align:center;padding:30px;font-family:\'Share Tech Mono\',monospace;font-size:11px">Aucun score pour l\'instant.</div>';
+  }catch(e){
+    content.innerHTML='<div style="color:var(--red);text-align:center;padding:30px;font-family:\'Share Tech Mono\',monospace;font-size:11px">Erreur de connexion Firebase.</div>';
+  }
+}
+
+// ── ADMIN PANEL ──
+async function openAdminPanel(){
+  const sb=document.getElementById('scoreboard');
+  const content=document.getElementById('sb-content');
+  content.innerHTML='<div style="color:var(--muted);text-align:center;padding:30px;font-family:\'Share Tech Mono\',monospace;font-size:11px;letter-spacing:2px">CHARGEMENT ADMIN...</div>';
+  sb.style.display='flex';
+  try{
+    const snap=await db.collection('players').orderBy('score','desc').get();
+    const colors=['#ffe600','#c0c0c0','#cd7f32'];
+    let html=`<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--purple);text-align:center;margin-bottom:16px;letter-spacing:2px;text-shadow:0 0 8px rgba(213,0,249,.5)">⚡ ADMIN — ${snap.size} JOUEUR(S) INSCRIT(S)</div>`;
+    snap.docs.forEach((doc,i)=>{
+      const d=doc.data();
+      const sc=Object.keys(d.solved||{}).filter(k=>d.solved[k]).length;
+      const rank=i<3?['🥇','🥈','🥉'][i]:'#'+(i+1);
+      const isAdmin=d.email===ADMIN_EMAIL;
+      html+=`<div class="sb-row" style="${isAdmin?'border-color:rgba(213,0,249,.4);background:rgba(213,0,249,.05)':''}">
+        <div class="sb-rank" style="color:${colors[i]||'var(--muted)'}">${rank}</div>
+        <div class="sb-name" style="${isAdmin?'color:var(--purple)':''}" title="${d.email}">${d.name||'?'}${isAdmin?' 👑':''}</div>
+        <div class="sb-solved" style="margin-right:12px">${sc}/12</div>
+        <div class="sb-score">${d.score||0}</div>
+      </div>`;
+    });
+    content.innerHTML=html;
+  }catch(e){
+    content.innerHTML='<div style="color:var(--red);text-align:center;padding:30px;font-family:\'Share Tech Mono\',monospace;font-size:11px">Erreur : '+e.message+'</div>';
+  }
+}
+
+function closeScoreboard(){
+  document.getElementById('scoreboard').style.display='none';
+}
+
+// ════════════════════════════════════════
+// WIN SCREEN
+// ════════════════════════════════════════
+function showWin(){
+  clearInterval(timerInterval);
+  const h=Math.floor(timerSec/3600).toString().padStart(2,'0');
+  const m=Math.floor((timerSec%3600)/60).toString().padStart(2,'0');
+  const s=(timerSec%60).toString().padStart(2,'0');
+  document.getElementById('sb-content').innerHTML=`
+    <div style="text-align:center;padding:20px">
+      <div style="font-size:60px;margin-bottom:16px">🏆</div>
+      <div style="font-family:'Orbitron',monospace;font-size:32px;font-weight:900;color:var(--green);text-shadow:0 0 20px var(--green);margin-bottom:10px">OPERATION COMPLETE</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:16px;color:var(--text);margin-bottom:8px">SCORE FINAL : ${totalScore} / 1600 PTS</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--muted)">Temps : ${h}:${m}:${s}</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--muted);margin-top:16px">Vous avez reconstitué l'attaque sur SRV-DC01.<br>C2 : 185.220.101.47 · Vecteur : RDP:3389 · Accès : 08:14:22 UTC</div>
+    </div>`;
+  document.getElementById('scoreboard').style.display='flex';
+  saveProgress();
+}
+</script>
+</body>
+</html>
