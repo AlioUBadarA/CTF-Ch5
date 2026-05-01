@@ -845,7 +845,7 @@ body::before{
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -1658,21 +1658,22 @@ Formule de priorisation :
 // INSTRUCTIONS :
 // 1. Allez sur https://console.firebase.google.com
 // 2. Créez un projet → Activez Authentication → Email/Password
-// 3. Créez une base Firestore (mode test)
+// 3. Créez une Realtime Database (mode test)
 // 4. Paramètres projet → Vos applications → Web → copiez la config
 // ════════════════════════════════════════
 const firebaseConfig = {
-  apiKey: "VOTRE_API_KEY",
-  authDomain: "VOTRE_PROJECT.firebaseapp.com",
-  projectId: "VOTRE_PROJECT_ID",
-  storageBucket: "VOTRE_PROJECT.appspot.com",
-  messagingSenderId: "VOTRE_SENDER_ID",
-  appId: "VOTRE_APP_ID"
+  apiKey: "AIzaSyBOTGAzDqHgLaVBuLNZGLXrF3Cym0vn0-8",
+  authDomain: "ctf-ch5.firebaseapp.com",
+  databaseURL: "https://ctf-ch5-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "ctf-ch5",
+  storageBucket: "ctf-ch5.firebasestorage.app",
+  messagingSenderId: "826734826993",
+  appId: "1:826734826993:web:5c135c00b9356333aca050"
 };
 const ADMIN_EMAIL = "badousadia0104@gmail.com";
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const db = firebase.firestore();
+const db = firebase.database();
 let currentUser = null;
 let playerName = '';
 let bootDone = false;
@@ -1711,9 +1712,9 @@ async function doRegister(){
   if(name.length<3){err.textContent='✗ Pseudo trop court (3 min)';return;}
   try{
     const cred=await auth.createUserWithEmailAndPassword(email,pass);
-    await db.collection('players').doc(cred.user.uid).set({
+    await db.ref('players/'+cred.user.uid).set({
       name,email,score:0,solved:{},hints:{},time:0,
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      createdAt:firebase.database.ServerValue.TIMESTAMP
     });
   }catch(e){
     err.textContent=e.code==='auth/email-already-in-use'?'✗ Email déjà utilisé':
@@ -1726,13 +1727,13 @@ async function doRegister(){
 // ── LOGOUT ──
 async function doLogout(){await auth.signOut();location.reload();}
 
-// ── LOAD PROGRESS FROM FIRESTORE ──
+// ── LOAD PROGRESS FROM RTDB ──
 async function loadProgress(){
   if(!currentUser)return;
   try{
-    const snap=await db.collection('players').doc(currentUser.uid).get();
-    if(!snap.exists)return;
-    const d=snap.data();
+    const snap=await db.ref('players/'+currentUser.uid).once('value');
+    if(!snap.exists())return;
+    const d=snap.val();
     playerName=d.name||currentUser.email;
     totalScore=d.score||0;
     solved=d.solved||{};
@@ -1758,15 +1759,15 @@ async function loadProgress(){
   }catch(e){console.error('loadProgress:',e);}
 }
 
-// ── SAVE PROGRESS TO FIRESTORE ──
+// ── SAVE PROGRESS TO RTDB ──
 async function saveProgress(){
   if(!currentUser)return;
   try{
-    await db.collection('players').doc(currentUser.uid).set({
+    await db.ref('players/'+currentUser.uid).update({
       name:playerName,email:currentUser.email,
       score:totalScore,solved,hints,time:timerSec,
-      lastUpdated:firebase.firestore.FieldValue.serverTimestamp()
-    },{merge:true});
+      lastUpdated:firebase.database.ServerValue.TIMESTAMP
+    });
   }catch(e){console.error('saveProgress:',e);}
 }
 
@@ -2036,14 +2037,16 @@ async function openScoreboard(){
   content.innerHTML='<div style="color:var(--muted);text-align:center;padding:30px;font-family:\'Share Tech Mono\',monospace;font-size:11px;letter-spacing:2px">CHARGEMENT...</div>';
   sb.style.display='flex';
   try{
-    const snap=await db.collection('players').orderBy('score','desc').limit(20).get();
+    const snap=await db.ref('players').orderByChild('score').limitToLast(20).once('value');
+    const players=[];
+    snap.forEach(child=>{players.push({id:child.key,...child.val()});});
+    players.sort((a,b)=>(b.score||0)-(a.score||0));
     const colors=['#ffe600','#c0c0c0','#cd7f32'];
     let html='';
-    snap.docs.forEach((doc,i)=>{
-      const d=doc.data();
+    players.forEach((d,i)=>{
       const sc=Object.keys(d.solved||{}).filter(k=>d.solved[k]).length;
       const rank=i<3?['🥇','🥈','🥉'][i]:'#'+(i+1);
-      const isYou=doc.id===currentUser?.uid;
+      const isYou=d.id===currentUser?.uid;
       html+=`<div class="sb-row" style="${isYou?'border-color:rgba(0,255,65,.4);background:rgba(0,255,65,.05)':''}">
         <div class="sb-rank" style="color:${colors[i]||'var(--muted)'}">${rank}</div>
         <div class="sb-name" style="${isYou?'color:var(--green)':''}">${d.name||'Anonyme'}${isYou?' ← YOU':''}</div>
@@ -2064,11 +2067,13 @@ async function openAdminPanel(){
   content.innerHTML='<div style="color:var(--muted);text-align:center;padding:30px;font-family:\'Share Tech Mono\',monospace;font-size:11px;letter-spacing:2px">CHARGEMENT ADMIN...</div>';
   sb.style.display='flex';
   try{
-    const snap=await db.collection('players').orderBy('score','desc').get();
+    const snap=await db.ref('players').orderByChild('score').once('value');
+    const players=[];
+    snap.forEach(child=>{players.push({id:child.key,...child.val()});});
+    players.sort((a,b)=>(b.score||0)-(a.score||0));
     const colors=['#ffe600','#c0c0c0','#cd7f32'];
-    let html=`<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--purple);text-align:center;margin-bottom:16px;letter-spacing:2px;text-shadow:0 0 8px rgba(213,0,249,.5)">⚡ ADMIN — ${snap.size} JOUEUR(S) INSCRIT(S)</div>`;
-    snap.docs.forEach((doc,i)=>{
-      const d=doc.data();
+    let html=`<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--purple);text-align:center;margin-bottom:16px;letter-spacing:2px;text-shadow:0 0 8px rgba(213,0,249,.5)">⚡ ADMIN — ${players.length} JOUEUR(S) INSCRIT(S)</div>`;
+    players.forEach((d,i)=>{
       const sc=Object.keys(d.solved||{}).filter(k=>d.solved[k]).length;
       const rank=i<3?['🥇','🥈','🥉'][i]:'#'+(i+1);
       const isAdmin=d.email===ADMIN_EMAIL;
