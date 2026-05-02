@@ -841,6 +841,36 @@ body::before{
   font-size:11px;color:var(--red);
   text-align:center;margin-top:10px;min-height:16px;
 }
+
+/* ── ADMIN PANEL ── */
+#admin-panel{display:none;position:fixed;inset:0;background:rgba(2,4,8,.93);z-index:600;align-items:center;justify-content:center}
+.ap-modal{background:var(--panel);border:1px solid rgba(213,0,249,.35);border-radius:8px;width:min(960px,97vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+.ap-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid rgba(213,0,249,.2)}
+.ap-title{font-family:'Orbitron',monospace;font-size:13px;color:var(--purple);letter-spacing:3px;text-shadow:0 0 10px rgba(213,0,249,.5)}
+.ap-tabs{display:flex;gap:2px;padding:12px 20px 0;border-bottom:1px solid var(--border)}
+.ap-tab{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--muted);background:transparent;border:1px solid transparent;border-bottom:none;padding:8px 18px;cursor:pointer;border-radius:4px 4px 0 0}
+.ap-tab.active{color:var(--purple);border-color:rgba(213,0,249,.35);background:rgba(213,0,249,.06)}
+.ap-body{overflow-y:auto;flex:1;padding:20px}
+.ap-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+.ap-stat-card{background:var(--card);border:1px solid var(--border2);border-radius:6px;padding:16px;text-align:center}
+.ap-stat-val{font-family:'Orbitron',monospace;font-size:26px;font-weight:700;color:var(--purple)}
+.ap-stat-lbl{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:4px}
+.ap-bar-bg{background:var(--dim);border-radius:3px;height:7px;overflow:hidden;margin-top:4px}
+.ap-bar-fill{height:100%;border-radius:3px;transition:width .4s}
+.ap-table{width:100%;border-collapse:collapse;font-family:'Share Tech Mono',monospace;font-size:11px}
+.ap-table th{text-align:left;color:var(--muted);letter-spacing:1px;padding:6px 8px;border-bottom:1px solid var(--border2);white-space:nowrap}
+.ap-table td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle}
+.ap-table tr:hover td{background:rgba(255,255,255,.02)}
+.ap-btn{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;padding:4px 10px;border-radius:3px;cursor:pointer;border:1px solid}
+.ap-btn-red{color:var(--red);border-color:rgba(255,23,68,.4);background:rgba(255,23,68,.07)}
+.ap-btn-red:hover{background:rgba(255,23,68,.18)}
+.ap-btn-green{color:var(--green);border-color:rgba(0,255,65,.4);background:rgba(0,255,65,.07)}
+.ap-btn-green:hover{background:rgba(0,255,65,.18)}
+.ap-edit-input{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--green);background:var(--bg);border:1px solid var(--border2);border-radius:3px;padding:4px 7px;width:100%}
+.ap-dots{display:flex;gap:2px;flex-wrap:wrap}
+.ap-dot{width:10px;height:10px;border-radius:2px;background:var(--dim)}
+.ap-dot.on{background:var(--green)}
+.ap-section-lbl{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:12px}
 </style>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -892,6 +922,23 @@ body::before{
 <!-- FLAG EXPLOSION -->
 <div class="flag-explode" id="flag-explode">🚩 FLAG!</div>
 
+<!-- ADMIN PANEL -->
+<div id="admin-panel">
+  <div class="ap-modal">
+    <div class="ap-header">
+      <div class="ap-title">⚡ ADMIN CONSOLE</div>
+      <button onclick="closeAdmin()" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border2);border-radius:4px;padding:6px 14px;cursor:pointer;letter-spacing:1px">[ CLOSE ]</button>
+    </div>
+    <div class="ap-tabs">
+      <button class="ap-tab active" onclick="switchAdminTab('stats',this)">STATS</button>
+      <button class="ap-tab" onclick="switchAdminTab('players',this)">JOUEURS</button>
+      <button class="ap-tab" onclick="switchAdminTab('challenges',this)">DÉFIS</button>
+      <button class="ap-tab" onclick="switchAdminTab('submissions',this)">SOUMISSIONS</button>
+    </div>
+    <div class="ap-body" id="ap-body"></div>
+  </div>
+</div>
+
 <!-- SCOREBOARD MODAL -->
 <div id="scoreboard">
   <div class="sb-panel">
@@ -909,7 +956,7 @@ body::before{
     <div class="timer-display" id="hdr-timer">00:00:00</div>
     <span id="hdr-user" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px"></span>
     <button onclick="openScoreboard()" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);background:transparent;border:1px solid var(--border2);border-radius:4px;padding:6px 12px;cursor:pointer;letter-spacing:1px">BOARD</button>
-    <button id="admin-btn" onclick="openAdminPanel()" style="display:none;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--purple);background:transparent;border:1px solid rgba(213,0,249,.35);border-radius:4px;padding:6px 12px;cursor:pointer;letter-spacing:1px">ADMIN</button>
+    <button id="admin-btn" onclick="openAdmin()" style="display:none;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--purple);background:transparent;border:1px solid rgba(213,0,249,.35);border-radius:4px;padding:6px 12px;cursor:pointer;letter-spacing:1px">ADMIN</button>
     <button onclick="doLogout()" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--red);background:transparent;border:1px solid rgba(255,23,68,.3);border-radius:4px;padding:6px 12px;cursor:pointer;letter-spacing:1px">LOGOUT</button>
   </div>
 </header>
@@ -1054,7 +1101,7 @@ body::before{
     <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{M0T_CL3_M4JUSCUL3S}</span> — La phase qui suit la détection + ce que vous capturez en priorité absolue</div>
     <div class="flag-input-row">
       <input class="flag-input" id="flag-c1" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
-      <button class="submit-btn" onclick="submitFlag('c1','FL4G{4N4LYS3_R4M}','Correct ! La phase Analyse précède toujours le Confinement. Et capturer la RAM est la priorité absolue — elle contient les clés de déchiffrement, processus actifs et connexions réseau qui disparaissent au redémarrage.',100)">SUBMIT</button>
+      <button class="submit-btn" onclick="submitFlag('c1')">SUBMIT</button>
     </div>
     <div class="flag-feedback" id="fb-c1"></div>
     <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
@@ -1106,7 +1153,7 @@ Kill Chain — Phases :
     <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{N0M_PH4S3}</span> — Nom de la phase Kill Chain en anglais</div>
     <div class="flag-input-row">
       <input class="flag-input" id="flag-c2" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
-      <button class="submit-btn" onclick="submitFlag('c2','FL4G{1NST4LL4T10N}','Phase 5 — Installation. L\'attaquant crée un mécanisme de persistance (clé registre Run, service système, tâche planifiée) pour survivre aux redémarrages. C\'est APRÈS l\'Exploitation (phase 4) et AVANT C2 (phase 6).',150)">SUBMIT</button>
+      <button class="submit-btn" onclick="submitFlag('c2')">SUBMIT</button>
     </div>
     <div class="flag-feedback" id="fb-c2"></div>
     <div style="margin-top:12px;display:flex;gap:10px">
@@ -1175,7 +1222,7 @@ Question : Panne à 08h14, dernier backup à 05h00.
     <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{Xh14_V10L4T3D}</span> ou <span style="color:var(--green)">FL4G{Xh14_R3SP3CT3D}</span> — X = heures entières perdues</div>
     <div class="flag-input-row">
       <input class="flag-input" id="flag-c3" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
-      <button class="submit-btn" onclick="submitFlag('c3','FL4G{3H14_V10L4T3D}','Panne à 08h14, backup à 05h00 → 3h14 de données perdues. Le RPO de 3h est VIOLÉ de 14 minutes. Conséquence : la politique de backup doit passer à toutes les 2h ou 3h max pour respecter le SLA.',125)">SUBMIT</button>
+      <button class="submit-btn" onclick="submitFlag('c3')">SUBMIT</button>
     </div>
     <div class="flag-feedback" id="fb-c3"></div>
   </div>
@@ -1221,7 +1268,7 @@ Question : Panne à 08h14, dernier backup à 05h00.
     <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{N0M_PP1D}</span> — nom du processus malveillant initial et son PID parent (ex: FL4G{svc.3x3_3712})</div>
     <div class="flag-input-row">
       <input class="flag-input" id="flag-c4" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
-      <button class="submit-btn" onclick="submitFlag('c4','FL4G{SVC.3X3_3712}','svc.exe (PID 4891) a pour parent powershell.exe (PPID 3712), lui-même enfant de mshta.exe. La chaîne lsass.exe → mshta.exe est anormale — lsass ne devrait pas lancer mshta. C\'est le vecteur d\'infection initial.',100)">SUBMIT</button>
+      <button class="submit-btn" onclick="submitFlag('c4')">SUBMIT</button>
     </div>
     <div class="flag-feedback" id="fb-c4"></div>
     <div style="margin-top:12px">
@@ -1280,7 +1327,7 @@ Question : Panne à 08h14, dernier backup à 05h00.
     <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{3RR3UR_CR1T1QU3}</span> — Une seule erreur rend la preuve irrecevable (2 mots max)</div>
     <div class="flag-input-row">
       <input class="flag-input" id="flag-c5" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
-      <button class="submit-btn" onclick="submitFlag('c5','FL4G{H4SH_M0D1F13}','Le SHA256 au retour du tribunal (b7) est différent du hash original (a8). Cela prouve une altération de la preuve pendant le transfert non documenté. Double problème : transfert 2 non documenté ET hash différent au retour. La preuve est irrecevable.',175)">SUBMIT</button>
+      <button class="submit-btn" onclick="submitFlag('c5')">SUBMIT</button>
     </div>
     <div class="flag-feedback" id="fb-c5"></div>
     <div style="margin-top:12px">
@@ -1335,7 +1382,7 @@ Question : Panne à 08h14, dernier backup à 05h00.
     <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{N0M_F1CH13R}</span> — sans extension</div>
     <div class="flag-input-row">
       <input class="flag-input" id="flag-c6" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
-      <button class="submit-btn" onclick="submitFlag('c6','FL4G{DC01_D1SK}','dc01_disk.dd a été altéré ! Hash déclaré pour \"disk_image_dc01_corptech\" ne correspond pas au SHA-256 réel du contenu fourni. C\'est la preuve d\'une falsification post-acquisition. Cette preuve est irrecevable.',150)">SUBMIT</button>
+      <button class="submit-btn" onclick="submitFlag('c6')">SUBMIT</button>
     </div>
     <div class="flag-feedback" id="fb-c6"></div>
   </div>
@@ -1374,7 +1421,7 @@ Question : Panne à 08h14, dernier backup à 05h00.
     <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{T3CHN1QU3_C0MPT3CR33}</span> — technique en 1 mot + nom du compte ajouté aux admins</div>
     <div class="flag-input-row">
       <input class="flag-input" id="flag-c7" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
-      <button class="submit-btn" onclick="submitFlag('c7','FL4G{BRUT3F0RC3_SVC_D4RKH4RV}','47 × Event 4625 (échecs) → 1 × Event 4624 (succès) = brute force réussi sur svc_backup. Puis Event 4732 = ajout du compte backdoor svc_darkh4rv au groupe Administrators. Séquence classique d\'escalade post-compromission.',125)">SUBMIT</button>
+      <button class="submit-btn" onclick="submitFlag('c7')">SUBMIT</button>
     </div>
     <div class="flag-feedback" id="fb-c7"></div>
     <div style="margin-top:12px">
@@ -1424,7 +1471,7 @@ Vrai Microsoft Update = windowsupdate.microsoft.com</span>
     <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{1P_C2}</span> — l'adresse IP du serveur C2</div>
     <div class="flag-input-row">
       <input class="flag-input" id="flag-c8" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
-      <button class="submit-btn" onclick="submitFlag('c8','FL4G{185.220.101.47}','185.220.101.47 est l\'IP du serveur C2. Le domaine windows-update.microsoft-cdn.com est un typosquatting du domaine légitime Microsoft. Les 350+ requêtes NXDOMAIN = algorithme DGA qui cherche son serveur C2 actif du jour.',200)">SUBMIT</button>
+      <button class="submit-btn" onclick="submitFlag('c8')">SUBMIT</button>
     </div>
     <div class="flag-feedback" id="fb-c8"></div>
     <div style="margin-top:12px">
@@ -1472,7 +1519,7 @@ Vrai Microsoft Update = windowsupdate.microsoft.com</span>
     <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{P0RT_S3RV1C3}</span> — numéro du port dangereux autorisé et nom du service</div>
     <div class="flag-input-row">
       <input class="flag-input" id="flag-c9" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
-      <button class="submit-btn" onclick="submitFlag('c9','FL4G{3389_RDP}','Port 3389 = RDP (Remote Desktop Protocol) — autorisé depuis l\'IP C2 185.220.101.47 ! C\'est le vecteur d\'accès initial. RDP exposé sur Internet sans VPN ni MFA = porte d\'entrée directe pour ransomware. Doit être strictement bloqué en entrée WAN.',125)">SUBMIT</button>
+      <button class="submit-btn" onclick="submitFlag('c9')">SUBMIT</button>
     </div>
     <div class="flag-feedback" id="fb-c9"></div>
   </div>
@@ -1523,7 +1570,7 @@ ip.dst == <span class="art-ip">185.220.101.47</span> && tcp.dstport == 443
     <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{PR0T0C0L3_1NT3RV4LL3s}</span> — protocole en majuscules et intervalle en secondes</div>
     <div class="flag-input-row">
       <input class="flag-input" id="flag-c10" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
-      <button class="submit-btn" onclick="submitFlag('c10','FL4G{HTTPS_30S}','Le C2 utilise HTTPS (port 443/TCP) avec un beaconing toutes les 30 secondes exactement. La régularité parfaite trahit un malware — le trafic humain est irrégulier. Filtre Wireshark : ip.dst==185.220.101.47 && tcp.dstport==443. Outil de détection : Zeek + RITA.',175)">SUBMIT</button>
+      <button class="submit-btn" onclick="submitFlag('c10')">SUBMIT</button>
     </div>
     <div class="flag-feedback" id="fb-c10"></div>
   </div>
@@ -1576,7 +1623,7 @@ Formule de priorisation :
     <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{VULN-XXX}</span> — ID de la vulnérabilité à patcher en premier</div>
     <div class="flag-input-row">
       <input class="flag-input" id="flag-c11" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
-      <button class="submit-btn" onclick="submitFlag('c11','FL4G{VULN-002}','VULN-002 : CVSS 8.1 × Exposition WAN (×2.0) = Score 16.2 · VULN-001 : CVSS 10.0 × Non exposé (×1.0) = Score 10.0 · VULN-002 gagne malgré un CVSS plus faible car l\'exposition WAN double le risque réel. Un CVE sur SMB exposé sur Internet = WannaCry scenario.',100)">SUBMIT</button>
+      <button class="submit-btn" onclick="submitFlag('c11')">SUBMIT</button>
     </div>
     <div class="flag-feedback" id="fb-c11"></div>
   </div>
@@ -1639,7 +1686,7 @@ Formule de priorisation :
     <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace">Format : <span style="color:var(--green)">FL4G{UTC_HH:MM:SS}</span> — heure UTC du premier accès RDP non autorisé</div>
     <div class="flag-input-row">
       <input class="flag-input" id="flag-c12" placeholder="FL4G{...}" oninput="this.value=this.value.toUpperCase()">
-      <button class="submit-btn" onclick="submitFlag('c12','FL4G{UTC_08:14:22}','Réponse : FW-PERIMETER log à 08:14:22 UTC — connexion RDP port 3389 depuis 185.220.101.47 autorisée. Le log DC01 (09:14:00 CET) converti en UTC donne 08:14:00 UTC = login RDP réussi 22s après l\'ouverture de connexion par le firewall. Time normalization : CET−1h = UTC.',175)">SUBMIT</button>
+      <button class="submit-btn" onclick="submitFlag('c12')">SUBMIT</button>
     </div>
     <div class="flag-feedback" id="fb-c12"></div>
     <div style="margin-top:12px">
@@ -1777,6 +1824,7 @@ auth.onAuthStateChanged(async(user)=>{
     currentUser=user;
     document.getElementById('auth-screen').style.display='none';
     if(user.email===ADMIN_EMAIL)document.getElementById('admin-btn').style.display='inline-block';
+    await loadChallengeOverrides();
     await loadProgress();
     if(!bootDone){bootDone=true;setTimeout(printLine,400);}
   }else{
@@ -1869,7 +1917,20 @@ function startTimer(){
 let totalScore=0;
 let solved={};
 let hints={};
-const pts={c1:100,c2:150,c3:125,c4:100,c5:175,c6:150,c7:125,c8:200,c9:125,c10:175,c11:100,c12:175};
+const CHALLENGES={
+  c1: {name:'IR-01 · Forensic Triage',       flag:'FL4G{4N4LYS3_R4M}',              pts:100, hint:'Le manager a tort. On n\'éteint JAMAIS avant d\'avoir fait deux choses : (1) passer par la phase qui vient entre Détection et Confinement dans le cycle IR, et (2) capturer ce qui disparaît en quelques secondes au redémarrage.',              expl:'Correct ! La phase Analyse précède toujours le Confinement. Et capturer la RAM est la priorité absolue — elle contient les clés de déchiffrement, processus actifs et connexions réseau qui disparaissent au redémarrage.'},
+  c2: {name:'IR-02 · Kill Chain',             flag:'FL4G{1NST4LL4T10N}',             pts:150, hint:'Un service Windows configuré en AUTO_START = survie au redémarrage. Quelle phase de la Kill Chain concerne l\'établissement de la persistance sur le système compromis ? C\'est la phase 5, entre Exploitation et C2.',                              expl:'Phase 5 — Installation. L\'attaquant crée un mécanisme de persistance (clé registre Run, service système, tâche planifiée) pour survivre aux redémarrages. C\'est APRÈS l\'Exploitation (phase 4) et AVANT C2 (phase 6).'},
+  c3: {name:'IR-03 · RPO Calculation',        flag:'FL4G{3H14_V10L4T3D}',            pts:125, hint:null,                                                                                                                                                                                                                                                    expl:'Panne à 08h14, backup à 05h00 → 3h14 de données perdues. Le RPO de 3h est VIOLÉ de 14 minutes. Conséquence : la politique de backup doit passer à toutes les 2h ou 3h max pour respecter le SLA.'},
+  c4: {name:'FOR-01 · Volatility',            flag:'FL4G{SVC.3X3_3712}',             pts:100, hint:'Cherchez le processus dont le parent (PPID) est powershell.exe (PID 3712). Le malware cherche à se cacher mais Volatility révèle la chaîne parente complète.',                                                                                       expl:'svc.exe (PID 4891) a pour parent powershell.exe (PPID 3712), lui-même enfant de mshta.exe. La chaîne lsass.exe → mshta.exe est anormale — lsass ne devrait pas lancer mshta. C\'est le vecteur d\'infection initial.'},
+  c5: {name:'FOR-02 · Chain of Custody',      flag:'FL4G{H4SH_M0D1F13}',            pts:175, hint:'Il y a deux problèmes dans ce formulaire. L\'un d\'eux est définitif et prouve mathématiquement que la preuve a été altérée. Comparez le SHA256 de la collecte initiale avec le SHA256 au retour du tribunal.',                                       expl:'Le SHA256 au retour du tribunal (b7) est différent du hash original (a8). Cela prouve une altération de la preuve pendant le transfert non documenté. Double problème : transfert 2 non documenté ET hash différent au retour. La preuve est irrecevable.'},
+  c6: {name:'FOR-03 · Hash Verification',     flag:'FL4G{DC01_D1SK}',                pts:150, hint:null,                                                                                                                                                                                                                                                    expl:'dc01_disk.dd a été altéré ! Hash déclaré pour "disk_image_dc01_corptech" ne correspond pas au SHA-256 réel du contenu fourni. C\'est la preuve d\'une falsification post-acquisition. Cette preuve est irrecevable.'},
+  c7: {name:'LOG-01 · Event IDs',             flag:'FL4G{BRUT3F0RC3_SVC_D4RKH4RV}', pts:125, hint:'4625 en masse puis 4624 = une technique bien connue. 4732 = quel compte a été ajouté au groupe Administrators ?',                                                                                                                                     expl:'47 × Event 4625 (échecs) → 1 × Event 4624 (succès) = brute force réussi sur svc_backup. Puis Event 4732 = ajout du compte backdoor svc_darkh4rv au groupe Administrators. Séquence classique d\'escalade post-compromission.'},
+  c8: {name:'LOG-02 · DNS Hunt',              flag:'FL4G{185.220.101.47}',           pts:200, hint:'NXDOMAIN = domaine inexistant (DGA cherche son C2 actif). NOERROR = domaine trouvé et IP résolue. Cherchez la seule requête NOERROR dans les logs. L\'IP résolue est le serveur C2.',                                                                 expl:'185.220.101.47 est l\'IP du serveur C2. Le domaine windows-update.microsoft-cdn.com est un typosquatting du domaine légitime Microsoft. Les 350+ requêtes NXDOMAIN = algorithme DGA qui cherche son serveur C2 actif du jour.'},
+  c9: {name:'LOG-03 · Firewall Rules',        flag:'FL4G{3389_RDP}',                 pts:125, hint:null,                                                                                                                                                                                                                                                    expl:'Port 3389 = RDP (Remote Desktop Protocol) — autorisé depuis l\'IP C2 185.220.101.47 ! C\'est le vecteur d\'accès initial. RDP exposé sur Internet sans VPN ni MFA = porte d\'entrée directe pour ransomware. Doit être strictement bloqué en entrée WAN.'},
+  c10:{name:'NET-01 · PCAP Analysis',         flag:'FL4G{HTTPS_30S}',                pts:175, hint:null,                                                                                                                                                                                                                                                    expl:'Le C2 utilise HTTPS (port 443/TCP) avec un beaconing toutes les 30 secondes exactement. La régularité parfaite trahit un malware — le trafic humain est irrégulier. Filtre Wireshark : ip.dst==185.220.101.47 && tcp.dstport==443. Outil de détection : Zeek + RITA.'},
+  c11:{name:'NET-02 · CVSS Scoring',          flag:'FL4G{VULN-002}',                 pts:100, hint:null,                                                                                                                                                                                                                                                    expl:'VULN-002 : CVSS 8.1 × Exposition WAN (×2.0) = Score 16.2 · VULN-001 : CVSS 10.0 × Non exposé (×1.0) = Score 10.0 · VULN-002 gagne malgré un CVSS plus faible car l\'exposition WAN double le risque réel. Un CVE sur SMB exposé sur Internet = WannaCry scenario.'},
+  c12:{name:'FINAL · Timeline',               flag:'FL4G{UTC_08:14:22}',             pts:175, hint:'FW-PERIMETER est déjà en UTC. Cherchez dans ce système la première entrée qui correspond à un accès RDP (port 3389) depuis l\'IP C2 que vous avez identifiée au challenge LOG-02.',                                                                    expl:'Réponse : FW-PERIMETER log à 08:14:22 UTC — connexion RDP port 3389 depuis 185.220.101.47 autorisée. Le log DC01 (09:14:00 CET) converti en UTC donne 08:14:00 UTC = login RDP réussi 22s après l\'ouverture de connexion par le firewall. Time normalization : CET−1h = UTC.'}
+};
 
 // ════════════════════════════════════════
 // NAVIGATION
@@ -1884,49 +1945,43 @@ function showChallenge(id){
 // ════════════════════════════════════════
 // FLAG SUBMISSION
 // ════════════════════════════════════════
-function submitFlag(cid,correct,explanation,points){
-  if(solved[cid]){return;}
+function submitFlag(cid){
+  if(solved[cid])return;
+  const cfg=CHALLENGES[cid];
   const inp=document.getElementById('flag-'+cid);
   const fb=document.getElementById('fb-'+cid);
   const val=inp.value.trim().toUpperCase();
-  if(val===correct.toUpperCase()){
-    // CORRECT
+  const isCorrect=val===cfg.flag.toUpperCase();
+  if(currentUser){
+    db.ref('submissions').push({uid:currentUser.uid,name:playerName,cid,submitted:val,correct:isCorrect,ts:firebase.database.ServerValue.TIMESTAMP});
+  }
+  if(isCorrect){
     solved[cid]=true;
-    let earned=points-(hints[cid]||0)*25;
+    let earned=cfg.pts-(hints[cid]||0)*25;
     if(earned<0)earned=10;
     totalScore+=earned;
-    // UI
     inp.classList.add('correct');
     fb.className='flag-feedback ok';
-    fb.innerHTML='🚩 FLAG ACCEPTED! +'+earned+' pts — '+explanation;
+    fb.innerHTML='🚩 FLAG ACCEPTED! +'+earned+' pts — '+cfg.expl;
     document.querySelector(`#${cid} .submit-btn`).disabled=true;
-    // Sidebar update
     const nav=document.getElementById('nav-'+cid);
     nav.classList.add('solved');
     const st=document.getElementById('st-'+cid);
-    st.style.background='var(--green)';
-    st.style.borderColor='var(--green)';
-    st.style.boxShadow='0 0 6px var(--green)';
-    // Header score
+    st.style.background='var(--green)';st.style.borderColor='var(--green)';st.style.boxShadow='0 0 6px var(--green)';
     document.getElementById('hdr-score').textContent=totalScore;
-    // Solved count
     const sc=Object.keys(solved).length;
     document.getElementById('solved-count').textContent=sc;
     document.getElementById('prog-txt').textContent=sc+'/12';
     document.getElementById('prog-bar').style.width=(sc/12*100)+'%';
-    // Explosion
     triggerExplosion();
-    // Save to Firebase
     saveProgress();
-    // Show solved banner
     const zone=document.getElementById('flag-'+cid).closest('.flag-zone');
     const banner=document.createElement('div');
     banner.className='solved-banner';
     banner.innerHTML=`<div class="solved-icon">🚩</div><div class="solved-text">CHALLENGE SOLVED<br><span style="color:var(--muted);font-size:10px">${cid.toUpperCase()}</span></div><div class="solved-pts">+${earned}</div>`;
     zone.parentNode.insertBefore(banner,zone);
-    // Check win
-    if(sc===12) setTimeout(showWin,1000);
-  } else {
+    if(sc===12)setTimeout(showWin,1000);
+  }else{
     inp.classList.add('wrong');
     fb.className='flag-feedback ko';
     fb.innerHTML='✗ INVALID FLAG. Vérifiez le format et réessayez.';
@@ -2060,34 +2115,187 @@ async function openScoreboard(){
   }
 }
 
-// ── ADMIN PANEL ──
-async function openAdminPanel(){
-  const sb=document.getElementById('scoreboard');
-  const content=document.getElementById('sb-content');
-  content.innerHTML='<div style="color:var(--muted);text-align:center;padding:30px;font-family:\'Share Tech Mono\',monospace;font-size:11px;letter-spacing:2px">CHARGEMENT ADMIN...</div>';
-  sb.style.display='flex';
+// ════════════════════════════════════════
+// ADMIN PANEL
+// ════════════════════════════════════════
+function openAdmin(){
+  document.getElementById('admin-panel').style.display='flex';
+  switchAdminTab('stats',document.querySelector('.ap-tab'));
+}
+function closeAdmin(){document.getElementById('admin-panel').style.display='none';}
+
+function switchAdminTab(tab,btn){
+  document.querySelectorAll('.ap-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  const body=document.getElementById('ap-body');
+  body.innerHTML='<div style="color:var(--muted);text-align:center;padding:30px;font-family:\'Share Tech Mono\',monospace;font-size:11px;letter-spacing:2px">CHARGEMENT...</div>';
+  if(tab==='stats')loadAdminStats();
+  else if(tab==='players')loadAdminPlayers();
+  else if(tab==='challenges')loadAdminChallenges();
+  else if(tab==='submissions')loadAdminSubmissions();
+}
+
+async function loadAdminStats(){
+  const body=document.getElementById('ap-body');
+  try{
+    const snap=await db.ref('players').once('value');
+    const players=[];
+    snap.forEach(c=>players.push(c.val()));
+    const total=players.length;
+    const totalSolves=players.reduce((s,p)=>s+Object.keys(p.solved||{}).filter(k=>p.solved[k]).length,0);
+    const avgScore=total?Math.round(players.reduce((s,p)=>s+(p.score||0),0)/total):0;
+    const hintTotal=players.reduce((s,p)=>s+Object.values(p.hints||{}).reduce((a,v)=>a+v,0),0);
+    const solveCounts={};
+    Object.keys(CHALLENGES).forEach(cid=>solveCounts[cid]=0);
+    players.forEach(p=>Object.keys(p.solved||{}).forEach(cid=>{if(p.solved[cid])solveCounts[cid]=(solveCounts[cid]||0)+1;}));
+    let html=`<div class="ap-stat-grid">
+      <div class="ap-stat-card"><div class="ap-stat-val" style="color:var(--cyan)">${total}</div><div class="ap-stat-lbl">JOUEURS</div></div>
+      <div class="ap-stat-card"><div class="ap-stat-val">${totalSolves}</div><div class="ap-stat-lbl">TOTAL SOLVES</div></div>
+      <div class="ap-stat-card"><div class="ap-stat-val" style="color:var(--green)">${avgScore}</div><div class="ap-stat-lbl">SCORE MOYEN</div></div>
+      <div class="ap-stat-card"><div class="ap-stat-val" style="color:var(--yellow)">${hintTotal}</div><div class="ap-stat-lbl">HINTS UTILISÉS</div></div>
+    </div>
+    <div class="ap-section-lbl">TAUX DE RÉSOLUTION PAR DÉFI</div>`;
+    Object.entries(CHALLENGES).forEach(([cid,cfg])=>{
+      const count=solveCounts[cid]||0;
+      const pct=total?Math.round(count/total*100):0;
+      const col=pct>=60?'var(--green)':pct>=30?'var(--yellow)':'var(--red)';
+      html+=`<div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:10px;margin-bottom:3px">
+          <span style="color:var(--text)">${cfg.name}</span>
+          <span style="color:${col}">${count}/${total} — ${pct}%</span>
+        </div>
+        <div class="ap-bar-bg"><div class="ap-bar-fill" style="width:${pct}%;background:${col}"></div></div>
+      </div>`;
+    });
+    body.innerHTML=html;
+  }catch(e){body.innerHTML='<div style="color:var(--red);padding:30px;font-family:\'Share Tech Mono\',monospace;font-size:11px;text-align:center">'+e.message+'</div>';}
+}
+
+async function loadAdminPlayers(){
+  const body=document.getElementById('ap-body');
   try{
     const snap=await db.ref('players').orderByChild('score').once('value');
     const players=[];
-    snap.forEach(child=>{players.push({id:child.key,...child.val()});});
+    snap.forEach(c=>players.push({id:c.key,...c.val()}));
     players.sort((a,b)=>(b.score||0)-(a.score||0));
-    const colors=['#ffe600','#c0c0c0','#cd7f32'];
-    let html=`<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--purple);text-align:center;margin-bottom:16px;letter-spacing:2px;text-shadow:0 0 8px rgba(213,0,249,.5)">⚡ ADMIN — ${players.length} JOUEUR(S) INSCRIT(S)</div>`;
-    players.forEach((d,i)=>{
-      const sc=Object.keys(d.solved||{}).filter(k=>d.solved[k]).length;
-      const rank=i<3?['🥇','🥈','🥉'][i]:'#'+(i+1);
-      const isAdmin=d.email===ADMIN_EMAIL;
-      html+=`<div class="sb-row" style="${isAdmin?'border-color:rgba(213,0,249,.4);background:rgba(213,0,249,.05)':''}">
-        <div class="sb-rank" style="color:${colors[i]||'var(--muted)'}">${rank}</div>
-        <div class="sb-name" style="${isAdmin?'color:var(--purple)':''}" title="${d.email}">${d.name||'?'}${isAdmin?' 👑':''}</div>
-        <div class="sb-solved" style="margin-right:12px">${sc}/12</div>
-        <div class="sb-score">${d.score||0}</div>
-      </div>`;
+    const cids=Object.keys(CHALLENGES);
+    let html=`<table class="ap-table"><thead><tr>
+      <th>#</th><th>PSEUDO</th><th>EMAIL</th><th>SCORE</th><th>DÉFIS RÉSOLUS</th><th>HINTS</th><th>TEMPS</th><th>ACTION</th>
+    </tr></thead><tbody>`;
+    players.forEach((p,i)=>{
+      const sc=Object.keys(p.solved||{}).filter(k=>p.solved[k]).length;
+      const hh=Math.floor((p.time||0)/3600).toString().padStart(2,'0');
+      const mm=Math.floor(((p.time||0)%3600)/60).toString().padStart(2,'0');
+      const ss=((p.time||0)%60).toString().padStart(2,'0');
+      const hintCount=Object.values(p.hints||{}).reduce((a,v)=>a+v,0);
+      const dots=cids.map(cid=>`<div class="ap-dot${p.solved&&p.solved[cid]?' on':''}" title="${CHALLENGES[cid].name}"></div>`).join('');
+      const isAdmin=p.email===ADMIN_EMAIL;
+      html+=`<tr>
+        <td style="color:var(--muted)">${i+1}</td>
+        <td style="color:${isAdmin?'var(--purple)':'var(--text)'}">${p.name||'?'}${isAdmin?' 👑':''}</td>
+        <td style="color:var(--muted);font-size:10px">${p.email||''}</td>
+        <td style="color:var(--green);font-weight:700">${p.score||0}</td>
+        <td><div class="ap-dots">${dots}</div><span style="color:var(--muted);font-size:10px;margin-left:4px">${sc}/12</span></td>
+        <td style="color:var(--yellow)">${hintCount}</td>
+        <td style="color:var(--muted);font-size:10px">${hh}:${mm}:${ss}</td>
+        <td>${isAdmin?'—':`<button class="ap-btn ap-btn-red" onclick="resetPlayer('${p.id}','${(p.name||'?').replace(/'/g,'\\\'')  }')">RESET</button>`}</td>
+      </tr>`;
     });
-    content.innerHTML=html;
-  }catch(e){
-    content.innerHTML='<div style="color:var(--red);text-align:center;padding:30px;font-family:\'Share Tech Mono\',monospace;font-size:11px">Erreur : '+e.message+'</div>';
-  }
+    html+='</tbody></table>';
+    body.innerHTML=html;
+  }catch(e){body.innerHTML='<div style="color:var(--red);padding:30px;font-family:\'Share Tech Mono\',monospace;font-size:11px;text-align:center">'+e.message+'</div>';}
+}
+
+async function resetPlayer(uid,name){
+  if(!confirm('Réinitialiser la progression de '+name+' ?'))return;
+  try{
+    await db.ref('players/'+uid).update({score:0,solved:{},hints:{},time:0});
+    loadAdminPlayers();
+  }catch(e){alert('Erreur : '+e.message);}
+}
+
+function loadAdminChallenges(){
+  const body=document.getElementById('ap-body');
+  let html=`<div class="ap-section-lbl">Modifiez un défi puis cliquez SAVE — les changements s'appliquent immédiatement en Firebase.</div>
+  <table class="ap-table"><thead><tr><th>DÉFI</th><th>FLAG</th><th>PTS</th><th>HINT</th><th></th></tr></thead><tbody>`;
+  Object.entries(CHALLENGES).forEach(([cid,cfg])=>{
+    html+=`<tr id="ap-row-${cid}">
+      <td style="color:var(--cyan);white-space:nowrap">${cfg.name}</td>
+      <td><input class="ap-edit-input" id="ap-flag-${cid}" value="${cfg.flag}" style="width:220px"></td>
+      <td><input class="ap-edit-input" id="ap-pts-${cid}" value="${cfg.pts}" style="width:55px"></td>
+      <td><input class="ap-edit-input" id="ap-hint-${cid}" value="${cfg.hint||''}" placeholder="—" style="width:220px"></td>
+      <td><button class="ap-btn ap-btn-green" onclick="saveChallenge('${cid}')">SAVE</button></td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  body.innerHTML=html;
+  db.ref('challenges').once('value').then(snap=>{
+    if(!snap.exists())return;
+    snap.forEach(c=>{
+      const cid=c.key;const d=c.val();
+      const fi=document.getElementById('ap-flag-'+cid);
+      const pi=document.getElementById('ap-pts-'+cid);
+      const hi=document.getElementById('ap-hint-'+cid);
+      if(fi&&d.flag)fi.value=d.flag;
+      if(pi&&d.pts)pi.value=d.pts;
+      if(hi&&d.hint!==undefined)hi.value=d.hint||'';
+    });
+  });
+}
+
+async function saveChallenge(cid){
+  const flag=document.getElementById('ap-flag-'+cid).value.trim();
+  const pts=parseInt(document.getElementById('ap-pts-'+cid).value)||CHALLENGES[cid].pts;
+  const hint=document.getElementById('ap-hint-'+cid).value.trim();
+  try{
+    await db.ref('challenges/'+cid).update({flag,pts,hint});
+    CHALLENGES[cid].flag=flag;CHALLENGES[cid].pts=pts;CHALLENGES[cid].hint=hint||null;
+    const row=document.getElementById('ap-row-'+cid);
+    row.style.background='rgba(0,255,65,.06)';
+    setTimeout(()=>{row.style.background='';},1500);
+  }catch(e){alert('Erreur : '+e.message);}
+}
+
+async function loadAdminSubmissions(){
+  const body=document.getElementById('ap-body');
+  try{
+    const snap=await db.ref('submissions').orderByChild('ts').limitToLast(200).once('value');
+    const subs=[];
+    snap.forEach(c=>subs.push(c.val()));
+    subs.reverse();
+    if(!subs.length){
+      body.innerHTML='<div style="color:var(--muted);text-align:center;padding:30px;font-family:\'Share Tech Mono\',monospace;font-size:11px">Aucune soumission pour l\'instant.</div>';
+      return;
+    }
+    let html=`<table class="ap-table"><thead><tr><th>HEURE</th><th>JOUEUR</th><th>DÉFI</th><th>FLAG SOUMIS</th><th>RÉSULTAT</th></tr></thead><tbody>`;
+    subs.forEach(s=>{
+      const time=s.ts?new Date(s.ts).toLocaleTimeString('fr-FR'):'—';
+      html+=`<tr>
+        <td style="color:var(--muted);white-space:nowrap">${time}</td>
+        <td style="color:var(--text)">${s.name||s.uid}</td>
+        <td style="color:var(--cyan);white-space:nowrap">${CHALLENGES[s.cid]?.name||s.cid}</td>
+        <td style="color:var(--yellow);font-size:10px;word-break:break-all">${s.submitted}</td>
+        <td style="color:${s.correct?'var(--green)':'var(--red)'};white-space:nowrap">${s.correct?'✓ CORRECT':'✗ FAUX'}</td>
+      </tr>`;
+    });
+    html+='</tbody></table>';
+    body.innerHTML=html;
+  }catch(e){body.innerHTML='<div style="color:var(--red);padding:30px;font-family:\'Share Tech Mono\',monospace;font-size:11px;text-align:center">'+e.message+'</div>';}
+}
+
+async function loadChallengeOverrides(){
+  try{
+    const snap=await db.ref('challenges').once('value');
+    if(!snap.exists())return;
+    snap.forEach(c=>{
+      const cid=c.key;const d=c.val();
+      if(CHALLENGES[cid]){
+        if(d.flag)CHALLENGES[cid].flag=d.flag;
+        if(d.pts)CHALLENGES[cid].pts=d.pts;
+        if(d.hint!==undefined)CHALLENGES[cid].hint=d.hint||null;
+      }
+    });
+  }catch(e){console.warn('loadChallengeOverrides:',e);}
 }
 
 function closeScoreboard(){
