@@ -2026,8 +2026,7 @@ function submitFlag(cid){
   }
   if(isCorrect){
     solved[cid]=true;
-    let earned=cfg.pts-(hints[cid]||0)*25;
-    if(earned<0)earned=10;
+    const earned=cfg.pts;
     totalScore+=earned;
     inp.classList.add('correct');
     fb.className='flag-feedback ok';
@@ -2072,10 +2071,11 @@ function showHint(hid){
   if(box.style.display==='block')return;
   box.style.display='block';
   const cid='c'+hid.replace('h','');
-  if(!hints[cid])hints[cid]=1;
-  // deduct
-  if(!solved[cid]){
-    totalScore=Math.max(0,totalScore-0); // only deduct on submission
+  if(!hints[cid]){
+    hints[cid]=1;
+    totalScore-=25;
+    document.getElementById('hdr-score').textContent=totalScore;
+    saveProgress();
   }
 }
 
